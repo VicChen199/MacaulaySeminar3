@@ -330,8 +330,9 @@ def paginate(config, source, year, schema, output_path):
     identities = [row.get(":id") for row in records]
     unique_ids = {_identity(value) for value in identities}
     if len(identities) != len(unique_ids):
+        duplicate_count = len(identities) - len(unique_ids)
         raise SocrataError(
-            f"{source} {year_number} {len(identities)} {len(unique_ids)}",
+            f"{source} {year_number} {len(identities)} {duplicate_count}",
             2,
         )
     frame = _page_frame(records, selected)
