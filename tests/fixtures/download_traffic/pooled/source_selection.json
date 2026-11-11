@@ -1,0 +1,16 @@
+{
+  "scenario": "A",
+  "mix_used": false,
+  "comparability_pass": null,
+  "comparability_r": null,
+  "comparability_n": null,
+  "periods": [
+    {
+      "period": "2016-2017",
+      "source": "automated",
+      "years": [2017, 2016],
+      "included": true,
+      "reason": ""
+    }
+  ]
+}
