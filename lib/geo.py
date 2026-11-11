@@ -24,16 +24,24 @@ class BoundaryError(Exception):
 
 
 def ensure_boundaries(config):
-    """Download pinned UHF42 files when SOURCE.txt is absent, then validate."""
+    """Download pinned UHF42 files when SOURCE.txt is absent, then validate.
+
+    SOURCE.txt is written only after the shapefile has 42 neighborhood polygons.
+    A SOURCE.txt that was already present is left in place.
+    """
     source_txt = _ROOT / "SOURCE.txt"
     shapefile = _ROOT / _SHAPEFILE
+    downloaded_sha = None
     if not source_txt.is_file():
-        _download_boundaries(config, source_txt)
+        downloaded_sha = _download_boundaries(config)
     _validate_shapefile(shapefile)
+    if downloaded_sha is not None:
+        source_txt.parent.mkdir(parents=True, exist_ok=True)
+        source_txt.write_text(downloaded_sha + "\n", encoding="utf-8")
     return shapefile
 
 
-def _download_boundaries(config, source_txt):
+def _download_boundaries(config):
     ref = str(config["geography"]["git_ref"])
     commits_url = (
         "https://api.github.com/repos/nycehs/NYC_geography/commits/"
@@ -61,8 +69,7 @@ def _download_boundaries(config, source_txt):
         target = _ROOT / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(_get_bytes(url, config))
-    source_txt.parent.mkdir(parents=True, exist_ok=True)
-    source_txt.write_text(sha + "\n", encoding="utf-8")
+    return sha
 
 
 def _get_bytes(url, config):
@@ -88,18 +95,18 @@ def _validate_shapefile(shapefile):
     except Exception:
         raise BoundaryError(_INVALID, 2) from None
     id_name = _first_present(frame.columns, _ID_COLUMNS)
-    ids = []
-    if id_name is not None:
-        ids = [_normalize_uhf_id(value) for value in frame[id_name]]
-    geometries_ok = len(frame.index) == 42 and all(
-        _geometry_ok(geom) for geom in frame.geometry
-    )
-    ids_ok = (
-        len(ids) == 42
-        and all(item is not None for item in ids)
-        and len(set(ids)) == 42
-    )
-    if not (geometries_ok and ids_ok):
+    if id_name is None:
+        raise BoundaryError(_INVALID, 2)
+    neighborhood_ids = []
+    for value, geom in zip(frame[id_name].tolist(), list(frame.geometry)):
+        uhf_id = _normalize_uhf_id(value)
+        # The pinned shapefile includes a code-0 outline that is not a neighborhood.
+        if uhf_id == "0":
+            continue
+        if uhf_id is None or not _geometry_ok(geom):
+            raise BoundaryError(_INVALID, 2)
+        neighborhood_ids.append(uhf_id)
+    if len(neighborhood_ids) != 42 or len(set(neighborhood_ids)) != 42:
         raise BoundaryError(_INVALID, 2)
 
 
