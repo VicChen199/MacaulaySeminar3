@@ -1,0 +1,54 @@
+[
+  {
+    ":id": 10,
+    "yr": "2019",
+    "m": "6",
+    "d": "1",
+    "hh": "0",
+    "mm": "0",
+    "vol": "8",
+    "segmentid": "seg",
+    "wktgeom": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "boro": "Manhattan"
+  },
+  {
+    ":id": 2,
+    "yr": "2019",
+    "m": "6",
+    "d": "1",
+    "hh": "0",
+    "mm": "0",
+    "vol": "8",
+    "segmentid": "seg",
+    "wktgeom": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "boro": "Manhattan"
+  },
+  {
+    ":id": 2,
+    "yr": "2019",
+    "m": "6",
+    "d": "1",
+    "hh": "0",
+    "mm": "15",
+    "vol": "8",
+    "segmentid": "seg",
+    "wktgeom": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "boro": "Manhattan"
+  },
+  {
+    ":id": 9,
+    "yr": "2019",
+    "m": "6",
+    "d": "1",
+    "hh": "0",
+    "mm": "30",
+    "vol": "8",
+    "segmentid": "seg",
+    "wktgeom": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "boro": "Manhattan"
+  }
+]

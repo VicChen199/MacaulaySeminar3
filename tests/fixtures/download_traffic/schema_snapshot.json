@@ -1,0 +1,37 @@
+{
+  "automated": {
+    "yr": "2019",
+    "m": "6",
+    "d": "1",
+    "hh": "0",
+    "mm": "0",
+    "vol": "1",
+    "segmentid": "seg",
+    "wktgeom": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "boro": "Manhattan"
+  },
+  "historical": {
+    "year": 2015,
+    "month": 1,
+    "day": 1,
+    "hour": 0,
+    "volume": 1,
+    "segment": "seg",
+    "wkt": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "borough": "Manhattan"
+  },
+  "aadt": {
+    "year": "2018",
+    "month": "1",
+    "day": "1",
+    "hour": "0",
+    "vol": "1",
+    "aadt": "240",
+    "segmentid": "seg",
+    "wktgeom": "POINT(-74.01 40.71)",
+    "direction": "NB",
+    "borough": "Manhattan"
+  }
+}

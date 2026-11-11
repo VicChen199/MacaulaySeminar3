@@ -1,0 +1,30 @@
+{
+  "scenario": "2",
+  "mix_used": true,
+  "comparability_pass": true,
+  "comparability_r": 0.9,
+  "comparability_n": 30,
+  "periods": [
+    {
+      "period": "2019",
+      "source": "automated",
+      "years": [2019],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2015",
+      "source": "historical",
+      "years": [2015],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2018",
+      "source": "aadt",
+      "years": [2018],
+      "included": false,
+      "reason": "not used"
+    }
+  ]
+}
