@@ -207,15 +207,41 @@ def test_run_all_script_route_has_no_health_route():
     assert listening.stdout.strip() == ""
 
 
-def test_run_all_terminal_stops_at_first_nonzero():
-    for script in SCRIPT_ROUTE:
-        assert not (ROOT / script).exists()
+def _run_all_commands(text):
+    commands = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("set ") or line == "export PYTHONPATH=.":
+            continue
+        commands.append(line)
+    return commands
+
+
+def test_run_all_terminal_stops_at_first_nonzero(tmp_path):
+    text = (ROOT / "run_all.sh").read_text()
+    assert _run_all_commands(text) == [f"python {script}" for script in SCRIPT_ROUTE]
+    project = tmp_path / "project"
+    (project / "scripts").mkdir(parents=True)
+    (project / "run_all.sh").write_text(text)
+    (project / SCRIPT_ROUTE[0]).write_text(
+        "import sys\n"
+        "sys.stderr.write('scripts/01_audit_sources.py\\n')\n"
+        "raise SystemExit(1)\n"
+    )
+    for script in SCRIPT_ROUTE[1:]:
+        (project / script).write_text(
+            "import sys\n"
+            f"sys.stderr.write({script!r} + '\\n')\n"
+            "raise SystemExit(0)\n"
+        )
     env = os.environ.copy()
     env["PATH"] = str(ROOT / ".venv" / "bin") + os.pathsep + env.get("PATH", "")
     try:
         completed = subprocess.run(
-            ["sh", str(ROOT / "run_all.sh")],
-            cwd=str(ROOT),
+            ["sh", str(project / "run_all.sh")],
+            cwd=str(project),
             env=env,
             capture_output=True,
             text=True,

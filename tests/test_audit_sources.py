@@ -365,7 +365,7 @@ def test_pooled_time_period_stays_one_period(monkeypatch, tmp_path):
     try:
         from lib.audit import inventory_asthma
 
-        result = inventory_asthma(str(PERIODS_DIR), config)
+        result = inventory_asthma(str(PERIODS_DIR))
         _period_table(_records(result, PERIOD_COLUMNS))
         assert not (tmp_path / "outputs").exists(), (
             "inventory_asthma on a fixture must not write outputs/"
