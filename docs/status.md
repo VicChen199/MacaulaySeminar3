@@ -16,3 +16,9 @@ attempts: 3
 repairs: 2
 result: passed
 commit: 268aa966178d4aad1e206d2b53d13377d8b24c7d
+
+## download-traffic
+attempts: 3
+repairs: 2
+result: passed
+commit: 9d4b8f970908218b77bba118cc8a578b28c5c352
