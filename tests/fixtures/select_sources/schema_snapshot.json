@@ -1,0 +1,5 @@
+{
+  "automated": ["yr", "m", "d", "hh", "mm", "vol", "segmentid", "wktgeom", "direction", "boro"],
+  "historical": ["year", "month", "day", "hour", "volume", "segment", "wkt", "direction", "borough"],
+  "aadt": ["year", "month", "day", "hour", "vol", "aadt", "segmentid", "wktgeom", "direction", "borough"]
+}
