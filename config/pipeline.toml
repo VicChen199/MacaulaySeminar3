@@ -1,0 +1,100 @@
+[api]
+app_token = ""
+page_size = 10000
+timeout_seconds = 120
+max_retries = 5
+retry_backoff_seconds = 2.0
+order_field = ":id"
+user_agent = "macaulay-seminar3-traffic-asthma"
+
+[api.automated]
+base_url = "https://data.cityofnewyork.us/resource/7ym2-wayt.json"
+
+[api.historical]
+base_url = "https://data.cityofnewyork.us/resource/btm5-ppia.json"
+
+[api.aadt]
+base_url = "https://data.ny.gov/resource/6amx-2pbv.json"
+
+[years]
+targets = [2015, 2016, 2017, 2018, 2019, 2022, 2023]
+excluded = [2020, 2021]
+primary_preference = 2023
+
+[thresholds]
+min_observation_dates = 2
+min_complete_hours = 24
+min_segments_per_uhf = 5
+min_uhf_per_period = 30
+sensitivity_min_segments = [5, 8, 10]
+sensitivity_min_hours = [24, 48]
+high_count_percentile = 99.9
+
+[sources]
+mix_min_traffic_r = 0.8
+aadt_xy_csv = ""
+preference = ["automated", "historical", "aadt"]
+
+[asthma]
+raw_dir = "data/raw/asthma"
+
+[geography]
+git_ref = "master"
+boundary_tolerance_meters = 1.0
+coordinate_round_meters = 1.0
+id_crosswalk_csv = ""
+lion_path = ""
+
+[pool]
+require_all_years = true
+
+[stats]
+alpha = 0.05
+bootstrap_comparisons = false
+
+[borough_aliases]
+Manhattan = ["Manhattan"]
+Bronx = ["Bronx"]
+Brooklyn = ["Brooklyn"]
+Queens = ["Queens"]
+"Staten Island" = ["Staten Island"]
+
+[fields.automated]
+year = ["year", "yr"]
+month = ["month", "m"]
+day = ["day", "d"]
+hour = ["hour", "hh"]
+minute = ["minute", "mm"]
+volume = ["volume", "vol"]
+segment = ["segment", "segmentid"]
+wkt = ["wkt", "wktgeom"]
+direction = ["direction"]
+borough = ["borough", "boro"]
+request = ["request", "requestid"]
+
+[fields.historical]
+year = ["year", "yr"]
+month = ["month", "m"]
+day = ["day", "d"]
+hour = ["hour", "hh"]
+minute = ["minute", "mm"]
+volume = ["volume", "vol"]
+segment = ["segment", "segmentid"]
+wkt = ["wkt", "wktgeom"]
+direction = ["direction"]
+borough = ["borough", "boro"]
+request = ["request", "requestid"]
+
+[fields.aadt]
+year = ["year", "yr"]
+month = ["month", "m"]
+day = ["day", "d"]
+hour = ["hour", "hh"]
+minute = ["minute", "mm"]
+volume = ["volume", "vol"]
+segment = ["segment", "segmentid"]
+wkt = ["wkt", "wktgeom"]
+direction = ["direction"]
+borough = ["borough", "boro"]
+request = ["request", "requestid"]
+aadt = ["aadt"]
