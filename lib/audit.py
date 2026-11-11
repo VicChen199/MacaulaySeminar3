@@ -505,15 +505,33 @@ def _read_polygons(shapefile_path):
 
     polygons = gpd.read_file(shapefile_path)
     id_name = _resolve(polygons.columns, _ID_COLUMNS)
+    if id_name is not None:
+        polygons = polygons.copy()
+        polygons["uhf42_id"] = polygons[id_name].map(_normalize_uhf_id)
+        keep = polygons["uhf42_id"].map(_is_neighborhood_id) & polygons.geometry.apply(
+            _geometry_ok
+        )
+        polygons = polygons.loc[keep]
     if polygons.crs is None:
         polygons = polygons.set_crs("EPSG:4326")
     polygons = polygons.to_crs("EPSG:2263")
     if id_name is None:
         polygons = polygons.assign(uhf42_id=pd.Series(dtype="object"))
-        return polygons[["uhf42_id", "geometry"]]
-    polygons = polygons.copy()
-    polygons["uhf42_id"] = polygons[id_name].map(_normalize_uhf_id)
     return polygons[["uhf42_id", "geometry"]]
+
+
+def _is_neighborhood_id(value):
+    """Normalized ids other than the code-0 outline can be coverage neighborhoods."""
+    return isinstance(value, str) and value != "0"
+
+
+def _geometry_ok(geom):
+    if geom is None:
+        return False
+    try:
+        return (not geom.is_empty) and bool(geom.is_valid)
+    except Exception:
+        return False
 
 
 def _score_year(config, source, frame, year, mode, polygons):
