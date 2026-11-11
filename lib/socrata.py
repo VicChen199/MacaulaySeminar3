@@ -1,5 +1,6 @@
-"""Read Socrata schemas and year counts for the traffic APIs."""
+"""Read Socrata schemas, year counts, and one paged source-year."""
 
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -146,6 +147,11 @@ def _headers(config):
 
 
 def _get_json(url, params, config, failed_query=None):
+    _content, payload, final_url = _exchange(url, params, config, failed_query)
+    return payload, final_url
+
+
+def _exchange(url, params, config, failed_query=None):
     headers = _headers(config)
     timeout = config["api"]["timeout_seconds"]
     retries = int(config["api"]["max_retries"])
@@ -176,10 +182,222 @@ def _get_json(url, params, config, failed_query=None):
                 raise SocrataError(failed_query, 2)
             raise SocrataError(full_url, 1)
         try:
-            return response.json(), full_url
+            payload = response.json()
         except ValueError:
             raise SocrataError(full_url, 1) from None
+        body = response.content
+        if not isinstance(body, (bytes, bytearray)):
+            body = b""
+        return bytes(body), payload, full_url
     raise SocrataError(full_url, 1)
+
+
+_PAGE_FIELDS = (
+    "year",
+    "month",
+    "day",
+    "hour",
+    "minute",
+    "volume",
+    "segment",
+    "wkt",
+    "direction",
+    "borough",
+    "request",
+)
+
+
+def paginate(config, source, year, schema, output_path):
+    """Page one source-year into output_path and return the row count.
+
+    Writes pages.jsonl and checkpoint.json beside the parquet. On success the
+    JSONL is removed and the checkpoint is left in place. Does not create outputs/.
+    """
+    if config["api"]["order_field"] != ":id":
+        raise SocrataError("order_field must be :id", 2)
+    year_number = int(year)
+    output_path = Path(output_path)
+    directory = output_path.parent
+    jsonl_path = directory / "pages.jsonl"
+    checkpoint_path = directory / "checkpoint.json"
+    offset, rows_so_far, fresh = _resume_state(
+        jsonl_path, checkpoint_path, source, year_number
+    )
+    live, sample = _schema_live_and_sample(schema, source)
+    year_name = _year_field(live, config["fields"][source]["year"])
+    if year_name is None:
+        raise SocrataError(f"{source} {year_number} {', '.join(live)}", 2)
+    selected = _select_fields(config, source, live)
+    where = _year_where(year_name, year_number, sample)
+    base_url = config["api"][source]["base_url"]
+    _content, payload, _final_url = _exchange(
+        base_url,
+        {"$select": "count(*)", "$where": where},
+        config,
+    )
+    try:
+        expected = _parse_count(payload, live)
+    except SocrataError as exc:
+        raise SocrataError(
+            f"{source} {year_number} {exc.message}", exc.exit_code
+        ) from None
+    page_size = int(config["api"]["page_size"])
+    directory.mkdir(parents=True, exist_ok=True)
+    appending = not fresh
+    while rows_so_far < expected:
+        _body, page, page_url = _exchange(
+            base_url,
+            {
+                "$select": ",".join(selected),
+                "$where": where,
+                "$order": ":id",
+                "$limit": page_size,
+                "$offset": offset,
+            },
+            config,
+        )
+        if not isinstance(page, list) or any(not isinstance(item, dict) for item in page):
+            raise SocrataError(page_url, 1)
+        page_count = len(page)
+        if page_count < page_size and rows_so_far + page_count != expected:
+            raise SocrataError(f"{source} {year_number} failed page", 2)
+        _append_jsonl(jsonl_path, page, "a" if appending else "w")
+        appending = True
+        rows_so_far += page_count
+        offset += page_count
+        _write_checkpoint(
+            checkpoint_path,
+            offset,
+            rows_so_far,
+            hashlib.sha256(_body).hexdigest(),
+        )
+        if page_count < page_size:
+            break
+    if rows_so_far != expected:
+        raise SocrataError(f"{source} {year_number} failed page", 2)
+    if fresh and expected == 0:
+        records = []
+    else:
+        records = _read_jsonl(jsonl_path)
+    if len(records) != expected:
+        raise SocrataError(f"{source} {year_number} failed page", 2)
+    identities = [row.get(":id") for row in records]
+    if len(identities) != len(set(_identity(value) for value in identities)):
+        raise SocrataError(f"{source} {year_number} duplicate :id", 2)
+    frame = _page_frame(records, selected)
+    frame.to_parquet(output_path, index=False)
+    if expected == 0:
+        _write_checkpoint(
+            checkpoint_path,
+            0,
+            0,
+            hashlib.sha256(b"").hexdigest(),
+        )
+    if jsonl_path.exists():
+        jsonl_path.unlink()
+    return int(len(records))
+
+
+def _schema_live_and_sample(schema, source):
+    raw = schema[source]
+    if isinstance(raw, dict):
+        live = [str(key) for key in raw.keys()]
+    else:
+        live = [str(name) for name in raw]
+    samples = getattr(schema, "samples", None)
+    if not isinstance(samples, dict) and isinstance(schema, dict):
+        candidate = schema.get("samples")
+        if isinstance(candidate, dict):
+            samples = candidate
+    if not isinstance(samples, dict):
+        samples = {}
+    sample = samples.get(source) or {}
+    if not isinstance(sample, dict):
+        sample = {}
+    return live, sample
+
+
+def _select_fields(config, source, live):
+    names = [":id"]
+    canonical = list(_PAGE_FIELDS)
+    if source == "aadt":
+        canonical.append("aadt")
+    fields = config["fields"][source]
+    for name in canonical:
+        found = _year_field(live, fields.get(name) or [])
+        if found is not None and found not in names:
+            names.append(found)
+    return names
+
+
+def _resume_state(jsonl_path, checkpoint_path, source, year_number):
+    jsonl_exists = jsonl_path.exists()
+    checkpoint_exists = checkpoint_path.exists()
+    if jsonl_exists and checkpoint_exists:
+        try:
+            checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            recorded = int(checkpoint["row_count"])
+            offset = int(checkpoint["next_offset"])
+        except (OSError, ValueError, KeyError, TypeError):
+            raise SocrataError(f"{source} {year_number} checkpoint mismatch", 2) from None
+        lines = _jsonl_line_count(jsonl_path)
+        if lines != recorded:
+            raise SocrataError(f"{source} {year_number} checkpoint mismatch", 2)
+        return offset, lines, False
+    return 0, 0, True
+
+
+def _jsonl_line_count(path):
+    count = 0
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                count += 1
+    return count
+
+
+def _append_jsonl(path, rows, mode):
+    with path.open(mode, encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, separators=(",", ":")) + "\n")
+        handle.flush()
+
+
+def _write_checkpoint(path, next_offset, row_count, page_hash):
+    payload = {
+        "next_offset": int(next_offset),
+        "row_count": int(row_count),
+        "page_hash": page_hash,
+    }
+    path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+
+def _read_jsonl(path):
+    if not path.exists():
+        return []
+    rows = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            text = line.strip()
+            if not text:
+                continue
+            rows.append(json.loads(text))
+    return rows
+
+
+def _identity(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, sort_keys=True)
+    return value
+
+
+def _page_frame(records, selected):
+    frame = pd.DataFrame(records)
+    if len(frame.index) == 0:
+        return pd.DataFrame({name: pd.Series(dtype="object") for name in selected})
+    ordered = [name for name in selected if name in frame.columns]
+    extras = [name for name in frame.columns if name not in ordered]
+    return frame.loc[:, ordered + extras]
 
 
 def _pause(response, config, attempt):
