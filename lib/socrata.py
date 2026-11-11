@@ -98,13 +98,19 @@ def _live_names(raw):
 
 
 def _embedded_sample(raw):
-    if (
-        isinstance(raw, dict)
-        and isinstance(raw.get("columns"), list)
-        and isinstance(raw.get("sample"), dict)
-    ):
-        return raw["sample"]
-    return {}
+    """Return the $limit=1 row stored for one source.
+
+    fetch_schema writes {"columns": [...], "sample": {field: value}}.
+    A snapshot entry may also be that row itself, {field: value}.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    sample = raw.get("sample")
+    if isinstance(sample, dict):
+        return sample
+    if isinstance(raw.get("columns"), list):
+        return {}
+    return raw
 
 
 def _year_field(live_keys, aliases):
