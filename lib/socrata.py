@@ -14,10 +14,11 @@ _COUNT_COLUMNS = ["source", "year", "record_count", "schema_ok"]
 
 
 class SocrataError(Exception):
-    def __init__(self, message, exit_code):
+    def __init__(self, message, exit_code, leave_folder=False):
         super().__init__(message)
         self.message = message
         self.exit_code = exit_code
+        self.leave_folder = leave_folder
 
 
 class _Snapshot(dict):
@@ -36,7 +37,7 @@ def fetch_schema(config):
         snapshot[source] = names
         snapshot.samples[source] = sample
     _SCHEMA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _SCHEMA_PATH.write_text(json.dumps(snapshot, indent=2) + "\n")
+    _SCHEMA_PATH.write_text(json.dumps(_schema_document(snapshot), indent=2) + "\n")
     return snapshot
 
 
@@ -48,12 +49,13 @@ def fetch_year_counts(config, schema):
     samples = getattr(schema, "samples", {})
     rows = []
     for source in _SOURCES:
-        live = [str(name) for name in schema[source]]
+        raw = schema[source]
+        live = _live_names(raw)
         field = _year_field(live, config["fields"][source]["year"])
         if field is None:
             raise SocrataError(", ".join(live), 2)
         url = config["api"][source]["base_url"]
-        sample = samples.get(source) or {}
+        sample = samples.get(source) or _embedded_sample(raw)
         _request_grouped_years(url, field, config, live)
         for year in config["years"]["targets"]:
             count = _request_year_count(url, field, int(year), sample, config, live)
@@ -71,6 +73,38 @@ def fetch_year_counts(config, schema):
         frame["record_count"] = frame["record_count"].astype(int)
         frame["schema_ok"] = frame["schema_ok"].astype(bool)
     return frame
+
+
+def _schema_document(snapshot):
+    samples = getattr(snapshot, "samples", {}) or {}
+    document = {}
+    for source in _SOURCES:
+        sample = samples.get(source) if isinstance(samples, dict) else None
+        if not isinstance(sample, dict):
+            sample = {}
+        document[source] = {
+            "columns": [str(name) for name in snapshot[source]],
+            "sample": sample,
+        }
+    return document
+
+
+def _live_names(raw):
+    if isinstance(raw, dict) and isinstance(raw.get("columns"), list):
+        return [str(name) for name in raw["columns"]]
+    if isinstance(raw, dict):
+        return [str(name) for name in raw]
+    return [str(name) for name in raw]
+
+
+def _embedded_sample(raw):
+    if (
+        isinstance(raw, dict)
+        and isinstance(raw.get("columns"), list)
+        and isinstance(raw.get("sample"), dict)
+    ):
+        return raw["sample"]
+    return {}
 
 
 def _year_field(live_keys, aliases):
@@ -244,6 +278,8 @@ def paginate(config, source, year, schema, output_path):
         ) from None
     page_size = int(config["api"]["page_size"])
     directory.mkdir(parents=True, exist_ok=True)
+    if output_path.name == "records.parquet" and output_path.exists():
+        output_path.unlink()
     appending = not fresh
     while rows_so_far < expected:
         _body, page, page_url = _exchange(
@@ -261,7 +297,10 @@ def paginate(config, source, year, schema, output_path):
             raise SocrataError(page_url, 1)
         page_count = len(page)
         if page_count < page_size and rows_so_far + page_count != expected:
-            raise SocrataError(f"{source} {year_number} failed page", 2)
+            raise SocrataError(
+                f"{source} {year_number} {expected} {rows_so_far + page_count}",
+                2,
+            )
         _append_jsonl(jsonl_path, page, "a" if appending else "w")
         appending = True
         rows_so_far += page_count
@@ -275,16 +314,20 @@ def paginate(config, source, year, schema, output_path):
         if page_count < page_size:
             break
     if rows_so_far != expected:
-        raise SocrataError(f"{source} {year_number} failed page", 2)
+        raise SocrataError(f"{source} {year_number} {expected} {rows_so_far}", 2)
     if fresh and expected == 0:
         records = []
     else:
         records = _read_jsonl(jsonl_path)
     if len(records) != expected:
-        raise SocrataError(f"{source} {year_number} failed page", 2)
+        raise SocrataError(f"{source} {year_number} {expected} {len(records)}", 2)
     identities = [row.get(":id") for row in records]
-    if len(identities) != len(set(_identity(value) for value in identities)):
-        raise SocrataError(f"{source} {year_number} duplicate :id", 2)
+    unique_ids = {_identity(value) for value in identities}
+    if len(identities) != len(unique_ids):
+        raise SocrataError(
+            f"{source} {year_number} {len(identities)} {len(unique_ids)}",
+            2,
+        )
     frame = _page_frame(records, selected)
     frame.to_parquet(output_path, index=False)
     if expected == 0:
@@ -304,10 +347,7 @@ def paginate(config, source, year, schema, output_path):
 
 def _schema_live_and_sample(schema, source):
     raw = schema[source]
-    if isinstance(raw, dict):
-        live = [str(key) for key in raw.keys()]
-    else:
-        live = [str(name) for name in raw]
+    live = _live_names(raw)
     samples = getattr(schema, "samples", None)
     if not isinstance(samples, dict) and isinstance(schema, dict):
         candidate = schema.get("samples")
@@ -315,7 +355,7 @@ def _schema_live_and_sample(schema, source):
             samples = candidate
     if not isinstance(samples, dict):
         samples = {}
-    sample = samples.get(source) or {}
+    sample = samples.get(source) or _embedded_sample(raw)
     if not isinstance(sample, dict):
         sample = {}
     return live, sample
@@ -338,15 +378,23 @@ def _resume_state(jsonl_path, checkpoint_path, source, year_number):
     jsonl_exists = jsonl_path.exists()
     checkpoint_exists = checkpoint_path.exists()
     if jsonl_exists and checkpoint_exists:
+        lines = _jsonl_line_count(jsonl_path)
         try:
             checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
             recorded = int(checkpoint["row_count"])
             offset = int(checkpoint["next_offset"])
         except (OSError, ValueError, KeyError, TypeError):
-            raise SocrataError(f"{source} {year_number} checkpoint mismatch", 2) from None
-        lines = _jsonl_line_count(jsonl_path)
+            raise SocrataError(
+                f"{source} {year_number} checkpoint mismatch",
+                2,
+                leave_folder=True,
+            ) from None
         if lines != recorded:
-            raise SocrataError(f"{source} {year_number} checkpoint mismatch", 2)
+            raise SocrataError(
+                f"{source} {year_number} {lines} {recorded}",
+                2,
+                leave_folder=True,
+            )
         return offset, lines, False
     return 0, 0, True
 
