@@ -210,8 +210,9 @@ _PAGE_FIELDS = (
 def paginate(config, source, year, schema, output_path):
     """Page one source-year into output_path and return the row count.
 
-    Writes pages.jsonl and checkpoint.json beside the parquet. On success the
-    JSONL is removed and the checkpoint is left in place. Does not create outputs/.
+    Writes pages.jsonl and checkpoint.json beside the parquet. pages.jsonl is
+    removed only after records.parquet is written. coverage.parquet leaves
+    pages.jsonl and the checkpoint in place. Does not create outputs/.
     """
     if config["api"]["order_field"] != ":id":
         raise SocrataError("order_field must be :id", 2)
@@ -293,8 +294,11 @@ def paginate(config, source, year, schema, output_path):
             0,
             hashlib.sha256(b"").hexdigest(),
         )
-    if jsonl_path.exists():
-        jsonl_path.unlink()
+    if output_path.name == "records.parquet":
+        if jsonl_path.exists():
+            jsonl_path.unlink()
+    elif output_path.name == "coverage.parquet" and not jsonl_path.exists():
+        jsonl_path.write_text("", encoding="utf-8")
     return int(len(records))
 
 
