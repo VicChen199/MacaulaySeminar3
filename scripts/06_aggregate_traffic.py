@@ -147,13 +147,55 @@ def _coverage_frame(neighborhoods):
     )
 
 
-def _exclusion_frame(locations):
+def _blank(value):
+    if value is None:
+        return True
+    try:
+        if pd.isna(value):
+            return True
+    except (TypeError, ValueError):
+        pass
+    return str(value).strip().casefold() in {"", "nan", "none", "<na>"}
+
+
+def _first_sources(hours):
+    found = {}
+    if not isinstance(hours, pd.DataFrame) or len(hours.index) == 0:
+        return found
+    if not {"monitoring_location_id", "year", "source"}.issubset(hours.columns):
+        return found
+    for location, year, source in zip(
+        hours["monitoring_location_id"].tolist(),
+        hours["year"].tolist(),
+        hours["source"].tolist(),
+    ):
+        if _blank(source):
+            continue
+        key = (
+            "" if location is None else str(location),
+            _year_key(year),
+        )
+        found.setdefault(key, str(source))
+    return found
+
+
+def _exclusion_frame(locations, hours=None):
+    sources = _first_sources(hours)
     rows = []
     if len(locations.index):
         for record in locations.to_dict(orient="records"):
             if record.get("eligible") is True:
                 continue
             source = record.get("source")
+            if _blank(source):
+                location = record.get("monitoring_location_id")
+                source = sources.get(
+                    (
+                        "" if location is None else str(location),
+                        _year_key(record.get("year")),
+                    ),
+                    "",
+                )
             rows.append(
                 {
                     "stage": "aggregate",
@@ -244,7 +286,7 @@ def _write(locations, segments, neighborhoods, hours):
     _coverage_frame(neighborhoods).to_csv(
         _COVERAGE, index=False, na_rep="", lineterminator="\n"
     )
-    _exclusion_frame(locations).to_csv(
+    _exclusion_frame(locations, hours).to_csv(
         _EXCLUSIONS, index=False, na_rep="", lineterminator="\n"
     )
     _append_log(hours)
