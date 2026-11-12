@@ -55,6 +55,12 @@ RESOLVED_YEAR_FIELD = {
     "historical": "year",
     "aadt": "year",
 }
+# Live keys for the date-alias audit. Not the year-alias fixtures above.
+DATE_ALIAS_ROWS = {
+    "automated": {"yr": "2015", "volume": "3"},
+    "historical": {"date": "2015-06-15"},
+    "aadt": {"aadt_year": "2015"},
+}
 COUNT_RE = re.compile(r"count\s*\(\s*\*\s*\)", re.IGNORECASE)
 YEAR_RE = re.compile(r"(?<!\d)((?:19|20)\d{2})(?!\d)")
 
@@ -156,7 +162,8 @@ def _json_response(payload, url):
     return response
 
 
-def _install_socrata(monkeypatch):
+def _install_socrata(monkeypatch, live_rows=None):
+    rows = LIVE_ROWS if live_rows is None else live_rows
     config = load_config()
     urls = {source: config["api"][source]["base_url"] for source in SOURCES}
     calls = []
@@ -178,11 +185,14 @@ def _install_socrata(monkeypatch):
                 "url": decoded,
                 "where": where,
                 "limit": limit,
+                "select": _param(query, "$select", "select"),
+                "group": _param(query, "$group", "group"),
+                "offset": _param(query, "$offset", "offset"),
             }
         )
         years = _years(where or decoded)
         if limit == "1":
-            payload = [LIVE_ROWS[source]]
+            payload = [rows[source]]
         elif COUNT_RE.search(decoded) and len(years) == 1 and years[0] in TARGETS:
             payload = [{"count": str(_count_for(source, years[0]))}]
         else:
@@ -322,7 +332,7 @@ def _invoke(script):
     return 0
 
 
-def _run_script(monkeypatch, tmp_path, raw_dir):
+def _run_script(monkeypatch, tmp_path, raw_dir, live_rows=None):
     """Run a copy of the audit script so writes stay off the repository tree."""
     script_src = ROOT / "scripts" / "01_audit_sources.py"
     repo = tmp_path / "project"
@@ -345,7 +355,7 @@ def _run_script(monkeypatch, tmp_path, raw_dir):
             "load_config",
             lambda config=base: copy.deepcopy(config),
         )
-        calls = _install_socrata(monkeypatch)
+        calls = _install_socrata(monkeypatch, live_rows)
         code = _invoke(script)
         return code, repo, calls
     finally:
@@ -434,6 +444,175 @@ def test_fixture_audit_prints_period_kinds_and_year_counts(monkeypatch, capsys, 
         assert set(snapshot) == set(SOURCES)
         for source, field in RESOLVED_YEAR_FIELD.items():
             assert field in json.dumps(snapshot[source])
+    finally:
+        created = _cleanup(existed)
+    assert not created, "fixture test must not write the repository outputs/ tree"
+
+
+class _LiveSchema(dict):
+    def __init__(self, rows):
+        super().__init__({source: list(row) for source, row in rows.items()})
+        self.samples = {source: dict(row) for source, row in rows.items()}
+
+
+def _target_count_wheres(calls, source):
+    found = []
+    for call in calls:
+        if call["source"] != source or not COUNT_RE.search(call["url"]):
+            continue
+        years = _years(call["where"])
+        if len(years) != 1 or years[0] not in TARGETS:
+            continue
+        found.append((years[0], call["where"]))
+    return found
+
+
+def _assert_date_alias_queries(calls):
+    """Historical date alias uses date_extract_y; text aadt_year is quoted."""
+    problems = []
+    historical = _target_count_wheres(calls, "historical")
+    historical_years = {year for year, _where in historical}
+    historical_bad = [
+        (year, where)
+        for year, where in historical
+        if where != f"date_extract_y(date)={year}"
+    ]
+    if historical_bad or historical_years != set(TARGETS) or len(historical) != len(TARGETS):
+        problems.append(
+            "historical target-year counts must use "
+            "$where=date_extract_y(date)=<year> with the year unquoted "
+            f"(got {historical})"
+        )
+    grouped = [
+        call for call in calls if call["source"] == "historical" and call["group"]
+    ]
+    if (
+        len(grouped) != 1
+        or "date_extract_y(date)" not in grouped[0]["select"]
+        or grouped[0]["group"] != "date_extract_y(date)"
+    ):
+        seen = [(call["select"], call["group"]) for call in grouped]
+        problems.append(
+            "historical must request one grouped year list using "
+            "date_extract_y(date) in both $select and $group "
+            f"(got {seen})"
+        )
+    aadt = _target_count_wheres(calls, "aadt")
+    aadt_years = {year for year, _where in aadt}
+    aadt_bad = [
+        (year, where) for year, where in aadt if where != f"aadt_year='{year}'"
+    ]
+    if aadt_bad or aadt_years != set(TARGETS) or len(aadt) != len(TARGETS):
+        problems.append(
+            "AADT counts must use $where=aadt_year='<year>' when aadt_year is "
+            f"text and year and yr are absent (got {aadt})"
+        )
+    aadt_grouped = [
+        call for call in calls if call["source"] == "aadt" and call["group"]
+    ]
+    if len(aadt_grouped) != 1 or aadt_grouped[0]["group"] != "aadt_year":
+        seen = [(call["select"], call["group"]) for call in aadt_grouped]
+        problems.append(
+            "AADT must group on the first live year alias aadt_year "
+            f"(got {seen})"
+        )
+    elif not _token(aadt_grouped[0]["select"], "aadt_year"):
+        problems.append(
+            "AADT grouped year list must use aadt_year in $select "
+            f"(got {aadt_grouped[0]['select']})"
+        )
+    automated = _target_count_wheres(calls, "automated")
+    automated_bad = [
+        (year, where) for year, where in automated if where != f"yr='{year}'"
+    ]
+    if (
+        automated_bad
+        or {year for year, _where in automated} != set(TARGETS)
+        or len(automated) != len(TARGETS)
+    ):
+        problems.append(
+            "automated text yr counts must use $where=yr='<year>' "
+            f"(got {automated})"
+        )
+    for call in calls:
+        if call["limit"] not in ("", "1") or call["offset"] or _token(call["url"], "offset"):
+            problems.append(
+                "no $offset and no volume page "
+                f"(source {call['source']} limit {call['limit']!r} "
+                f"offset {call['offset']!r})"
+            )
+            break
+    assert not problems, "; ".join(problems)
+
+
+def test_date_extract_y_and_aadt_year_text_counts(monkeypatch, tmp_path):
+    existed = _existed()
+    monkeypatch.chdir(tmp_path)
+    calls = _install_socrata(monkeypatch, DATE_ALIAS_ROWS)
+    schema = _LiveSchema(DATE_ALIAS_ROWS)
+    result = None
+    error = None
+    try:
+        from lib.socrata import fetch_year_counts
+
+        try:
+            result = fetch_year_counts(load_config(), schema)
+        except Exception as exc:
+            error = exc
+        _assert_date_alias_queries(calls)
+        assert error is None, (
+            "fetch_year_counts must count historical years with "
+            "date_extract_y(date) and AADT years with aadt_year='<year>'"
+        )
+        frame = _records(result, COUNT_COLUMNS)
+        names = [str(column).strip() for column in result.columns]
+        assert names == list(COUNT_COLUMNS)
+        _count_table(frame)
+    finally:
+        created = _cleanup(existed)
+    assert not created, "fetch_year_counts on a fixture must not write outputs/"
+
+
+def test_fixture_audit_date_alias_prints_period_kinds_and_year_counts(
+    monkeypatch, capsys, tmp_path
+):
+    script = ROOT / "scripts" / "01_audit_sources.py"
+    if not script.is_file():
+        pytest.fail(
+            "scripts/01_audit_sources.py is missing; a fixture audit whose "
+            "historical schema has date and no year alias, and whose AADT "
+            "schema has aadt_year and no year alias, must print each period "
+            "kind and the three API year counts and exit 0"
+        )
+    existed = _existed()
+    try:
+        code, repo, calls = _run_script(
+            monkeypatch, tmp_path, PERIODS_DIR, DATE_ALIAS_ROWS
+        )
+        captured = capsys.readouterr()
+        _assert_date_alias_queries(calls)
+        assert code == 0, (
+            "a fixture audit whose historical schema has date and no year "
+            "alias, and whose AADT schema has aadt_year and no year alias, "
+            "must print each period kind and the three API year counts and exit 0"
+        )
+        _assert_terminal(f"{captured.out}{captured.err}")
+        for source in SOURCES:
+            assert any(
+                call["source"] == source and call["limit"] == "1" for call in calls
+            ), f"fetch_schema must request $limit=1 from {source}"
+        audit = repo / "outputs" / "audit"
+        _period_table(_csv_records(audit / "asthma_time_periods.csv"))
+        counts_path = audit / "traffic_year_counts.csv"
+        with counts_path.open(newline="") as handle:
+            reader = csv.DictReader(handle)
+            assert reader.fieldnames == list(COUNT_COLUMNS)
+            count_records = list(reader)
+        _count_table(count_records)
+        snapshot = json.loads((audit / "schema_snapshot.json").read_text())
+        assert set(snapshot) == set(SOURCES)
+        for source, row in DATE_ALIAS_ROWS.items():
+            assert snapshot[source] == list(row)
     finally:
         created = _cleanup(existed)
     assert not created, "fixture test must not write the repository outputs/ tree"

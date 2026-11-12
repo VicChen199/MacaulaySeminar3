@@ -71,6 +71,8 @@ def _expected_config():
     historical = _field_table()
     aadt = _field_table()
     aadt["aadt"] = ["aadt"]
+    aadt["year"] = ["year", "yr", "aadt_year"]
+    historical["date"] = ["date"]
     return {
         "api": {
             "app_token": "",
@@ -151,6 +153,22 @@ def test_load_config_returns_architecture_table():
     with path.open("rb") as handle:
         parsed = tomllib.load(handle)
     loaded = load_config()
+    alias_gaps = []
+    if loaded["fields"]["aadt"]["year"] != ["year", "yr", "aadt_year"]:
+        alias_gaps.append(
+            "fields.aadt.year must be ['year', 'yr', 'aadt_year'] "
+            f"(got {loaded['fields']['aadt']['year']!r})"
+        )
+    if loaded["fields"]["historical"].get("date") != ["date"]:
+        alias_gaps.append(
+            "fields.historical.date must be ['date'] "
+            f"(got {loaded['fields']['historical'].get('date')!r})"
+        )
+    assert not alias_gaps, "; ".join(alias_gaps)
+    assert loaded["fields"]["automated"]["year"] == ["year", "yr"]
+    assert loaded["fields"]["historical"]["year"] == ["year", "yr"]
+    assert "date" not in loaded["fields"]["automated"]
+    assert "date" not in loaded["fields"]["aadt"]
     _assert_contract_value(loaded, _expected_config())
     assert loaded == parsed
     assert loaded["api"]["order_field"] == ":id"
