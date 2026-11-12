@@ -40,6 +40,7 @@ _RANGE_RE = re.compile(
     re.IGNORECASE,
 )
 _YEAR_RE = re.compile(r"^(\d{4})$")
+_GROUPED_NUMBER_RE = re.compile(r"^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?$")
 
 
 class CleanError(Exception):
@@ -57,7 +58,8 @@ def clean_asthma(frame, config=None):
     headers Geography, Borough, Number, and
     "Estimated annual rate per 10,000" are renamed to the internal
     names before the required-column check. An internal name that is
-    already present is kept.
+    already present is kept. A thousands comma in a count or rate,
+    such as 1,036, is removed before the value is parsed.
     """
     if config is None:
         config = load_config()
@@ -192,8 +194,9 @@ def _measure(value):
         return None
     if text.casefold() in _SUPPRESSED:
         return None
+    token = text.replace(",", "") if _GROUPED_NUMBER_RE.match(text) else text
     try:
-        number = float(text)
+        number = float(token)
     except ValueError:
         raise CleanError(text, 2) from None
     if not math.isfinite(number):
