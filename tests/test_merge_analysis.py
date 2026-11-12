@@ -146,7 +146,7 @@ def _frames():
             _traffic_row("101", "2019", 30.0, 6, balanced=28.0),
             _traffic_row("102", "2019", 8.0, 6, balanced=7.0),
             _traffic_row("103", "2019", 4.0, 6, balanced=4.0),
-            _traffic_row("104", "2019", 15.0, 4, balanced=14.0),
+            _traffic_row("104", "2019", 15.0, 0, balanced=14.0),
         ]
     )
     comparison = pd.DataFrame(

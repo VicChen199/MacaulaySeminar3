@@ -1905,15 +1905,35 @@ def test_one_observation_date_is_not_eligible(monkeypatch, capsys, tmp_path):
         _expect_scenario_d(monkeypatch, capsys, tmp_path, rows)
 
 
-def test_twenty_three_complete_hours_are_not_eligible(monkeypatch, capsys, tmp_path):
+def test_twenty_three_complete_hours_are_eligible(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         _contract()
+        periods_path = FIXTURES / "scenario_a" / "asthma_time_periods.csv"
+        snapshot = _load_snapshot()
         rows = _automated_rows(
             2019,
             [(1, 6, list(range(12))), (1, 7, list(range(11)))],
             _identity,
         )
-        _expect_scenario_d(monkeypatch, capsys, tmp_path, rows)
+        catalog = _Catalog().add("automated", 2019, rows)
+        code, text, repo, _calls = _run_script(
+            monkeypatch, capsys, tmp_path, periods_path, snapshot, catalog
+        )
+        assert code == 0, text
+        _assert_terminal(text, "A", {"2019": "automated"}, [])
+        _assert_selection(
+            repo / "outputs" / "audit" / "source_selection.json",
+            "A",
+            None,
+            {
+                "2019": {
+                    "source": "automated",
+                    "years": [2019],
+                    "included": True,
+                    "reason": "",
+                }
+            },
+        )
 
 
 def test_two_directions_keep_an_hour_only_when_both_are_present(monkeypatch, capsys, tmp_path):

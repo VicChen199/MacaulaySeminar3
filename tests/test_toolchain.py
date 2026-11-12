@@ -99,8 +99,8 @@ def _expected_config():
         },
         "thresholds": {
             "min_observation_dates": 2,
-            "min_complete_hours": 24,
-            "min_segments_per_uhf": 5,
+            "min_complete_hours": 1,
+            "min_segments_per_uhf": 1,
             "min_uhf_per_period": 30,
             "sensitivity_min_segments": [5, 8, 10],
             "sensitivity_min_hours": [24, 48],

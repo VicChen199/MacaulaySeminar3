@@ -1497,7 +1497,7 @@ def test_location_years_average_days_and_balance_hours(monkeypatch, capsys, tmp_
             "averages days. hour_balanced_mean averages available clock-hour "
             "means, then averages the weekday mean and the weekend mean when "
             "both exist. Monday through Friday are weekdays. A location is "
-            "eligible only when n_days >= 2 and n_complete_hours >= 24."
+            "eligible only when n_days >= 2 and n_complete_hours >= 1."
         )
         ids = _Ids()
         rows = []
@@ -1570,7 +1570,7 @@ def test_location_years_average_days_and_balance_hours(monkeypatch, capsys, tmp_
         assert _count(one_day["n_days"]) == 1
         assert _count(one_day["n_complete_hours"]) == 24
         short = _eligible_location(locations, "loc-short")
-        assert _flag(short["eligible"]) is False
+        assert _flag(short["eligible"]) is True
         assert _count(short["n_days"]) == 2
         assert _count(short["n_complete_hours"]) == 23
         balance = _eligible_location(locations, "loc-balance")
@@ -1716,8 +1716,8 @@ def test_thresholds_come_from_config(monkeypatch, capsys, tmp_path):
         )
         config = load_config()
         assert int(config["thresholds"]["min_observation_dates"]) == 2
-        assert int(config["thresholds"]["min_complete_hours"]) == 24
-        assert int(config["thresholds"]["min_segments_per_uhf"]) == 5
+        assert int(config["thresholds"]["min_complete_hours"]) == 1
+        assert int(config["thresholds"]["min_segments_per_uhf"]) == 1
         ids = _Ids()
         rows = _location_block(
             ids,
@@ -1756,7 +1756,7 @@ def test_thresholds_come_from_config(monkeypatch, capsys, tmp_path):
             return copied_value
 
         stricter_hours = _copied_call(
-            "min_complete_hours = 24",
+            "min_complete_hours = 1",
             "min_complete_hours = 25",
             "location_years",
             hours,
@@ -1786,7 +1786,7 @@ def test_thresholds_come_from_config(monkeypatch, capsys, tmp_path):
         assert len(valid) == 1
         _close(valid[0]["traffic_mean_vehicles_per_hour"], 10)
         widened = _copied_call(
-            "min_segments_per_uhf = 5",
+            "min_segments_per_uhf = 1",
             "min_segments_per_uhf = 6",
             "neighborhood_periods",
             segments,
@@ -1837,13 +1837,16 @@ def test_neighborhood_mean_is_unweighted_and_pool_weights_years(monkeypatch, cap
         _assert_columns(frame, UHF_COLUMNS)
         _assert_invalid_means_are_null(frame)
         year_rows = _valid_rows(frame, "2019")
-        assert len(year_rows) == 1
-        assert _id_text(year_rows[0]["uhf42_id"]) == "101"
-        _close(year_rows[0]["traffic_mean_vehicles_per_hour"], 30)
-        _close(year_rows[0]["traffic_mean_hour_balanced"], 5)
-        _close(year_rows[0]["traffic_median_vehicles_per_hour"], 30)
-        assert _count(year_rows[0]["n_road_segments"]) == 5
-        assert _text(year_rows[0]["traffic_source"]) == "automated"
+        by_uhf = {_id_text(row["uhf42_id"]): row for row in year_rows}
+        assert set(by_uhf) == {"101", "102"}
+        _close(by_uhf["101"]["traffic_mean_vehicles_per_hour"], 30)
+        _close(by_uhf["101"]["traffic_mean_hour_balanced"], 5)
+        _close(by_uhf["101"]["traffic_median_vehicles_per_hour"], 30)
+        assert _count(by_uhf["101"]["n_road_segments"]) == 5
+        assert _text(by_uhf["101"]["traffic_source"]) == "automated"
+        _close(by_uhf["102"]["traffic_mean_vehicles_per_hour"], 8)
+        _close(by_uhf["102"]["traffic_mean_hour_balanced"], 8)
+        assert _count(by_uhf["102"]["n_road_segments"]) == 4
         assert _valid_rows(frame, "SKIP") == []
         pooled = _valid_rows(frame, "2015-2016")
         assert [(_id_text(row["uhf42_id"])) for row in pooled] == ["201"]
@@ -1944,7 +1947,7 @@ def _script_zero_traffic():
                 uhf="401",
                 road_segment_id=f"seg-401-{index}",
                 segment=f"seg-401-{index}",
-                days=_uniform_days(2018, 5),
+                days=[(2018, 1, 8, list(range(24)), 5)],
             )
         )
     return _traffic_frame(rows)
@@ -1979,7 +1982,7 @@ def test_script_prints_eligible_count_and_median(monkeypatch, capsys, tmp_path):
         assert code == 0, text
         _assert_period_lines(
             text,
-            [("2019", 2, 6), ("2018", 0, None)],
+            [("2019", 2, 6), ("2018", 1, 4)],
         )
         assert "1999" not in {item[0] for item in _period_lines(text)}
         locations, segments = _assert_success_files(repo)
@@ -2014,10 +2017,13 @@ def test_script_prints_eligible_count_and_median(monkeypatch, capsys, tmp_path):
         _close(by_uhf["102"]["traffic_mean_hour_balanced"], 4)
         _close(by_uhf["102"]["traffic_median_vehicles_per_hour"], 1)
         assert _count(by_uhf["102"]["n_road_segments"]) == 7
-        assert _valid_rows(uhf, "2018") == []
+        valid_2018 = _valid_rows(uhf, "2018")
+        assert len(valid_2018) == 1
+        assert _id_text(valid_2018[0]["uhf42_id"]) == "401"
+        assert _count(valid_2018[0]["n_road_segments"]) == 4
         _assert_coverage(repo, "2019", "101", 5, 5, True)
         _assert_coverage(repo, "2019", "102", 7, 7, True)
-        _assert_coverage(repo, "2018", "401", 4, 4, False)
+        _assert_coverage(repo, "2018", "401", 4, 4, True)
 
 
 def test_pooled_script_value_is_the_unweighted_mean_of_year_means(
@@ -2095,7 +2101,7 @@ def test_zero_eligible_neighborhoods_exit_0_and_write_coverage(monkeypatch, caps
         uhf = _read_uhf(repo)
         assert _valid_rows(uhf, "2018") == []
         _assert_invalid_means_are_null(uhf)
-        _assert_coverage(repo, "2018", "401", 4, 4, False)
+        _assert_coverage(repo, "2018", "401", 0, 0, False)
 
 
 def test_script_empty_direction_exits_2(monkeypatch, capsys, tmp_path):

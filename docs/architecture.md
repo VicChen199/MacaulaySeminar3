@@ -603,8 +603,8 @@ This journey uses `run-tests`.
 | years.excluded | list of int | 2020, 2021 |
 | years.primary_preference | int | 2023 |
 | thresholds.min_observation_dates | int | 2 |
-| thresholds.min_complete_hours | int | 24 |
-| thresholds.min_segments_per_uhf | int | 5 |
+| thresholds.min_complete_hours | int | 1 |
+| thresholds.min_segments_per_uhf | int | 1 |
 | thresholds.min_uhf_per_period | int | 30 |
 | thresholds.sensitivity_min_segments | list of int | 5, 8, 10 |
 | thresholds.sensitivity_min_hours | list of int | 24, 48 |
