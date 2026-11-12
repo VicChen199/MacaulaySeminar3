@@ -35,6 +35,7 @@ def clean_traffic(frame, config, source=None):
 
     Does not write files and does not use the network. Exact duplicate
     rows are removed. Zero volumes stay. Negative volumes are excluded.
+    An automated integer minute outside {0, 15, 30, 45} is excluded.
     """
     if source is None and isinstance(config, str):
         source = config
@@ -100,6 +101,21 @@ def clean_traffic(frame, config, source=None):
                     "stage": "clean",
                     "key": ids[index],
                     "reason": "negative_volume",
+                    "source": source,
+                }
+            )
+            continue
+        minute = minutes[index]
+        if (
+            source == "automated"
+            and minute is not None
+            and minute not in _QUARTERS
+        ):
+            exclusions.append(
+                {
+                    "stage": "clean",
+                    "key": ids[index],
+                    "reason": "minute_not_quarter",
                     "source": source,
                 }
             )
@@ -233,7 +249,7 @@ def _minute_mode(frame, resolved, source, ids):
     for index, (kind, payload) in enumerate(parsed):
         if kind == "missing":
             continue
-        if kind == "int" and payload in _QUARTERS:
+        if kind == "int" and (payload in _QUARTERS or source == "automated"):
             continue
         token = payload if kind == "bad" else str(payload)
         if token not in bad:
