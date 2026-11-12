@@ -748,6 +748,20 @@ def _assert_listed(records, identity, source):
     return matches
 
 
+def _one_exclusion(records, identity, reason, source="automated"):
+    matches = [
+        record
+        for record in records
+        if record["key"].strip() == str(identity)
+        and record["reason"].strip() == reason
+        and record["source"].strip() == source
+    ]
+    assert len(matches) == 1, (identity, reason, records)
+    assert matches[0]["stage"].strip() == "clean"
+    assert matches[0]["key"].strip() == str(identity)
+    return matches[0]
+
+
 def _outputs(repo):
     asthma = repo / "outputs" / "data" / "cleaned_asthma.csv"
     traffic = repo / "outputs" / "data" / "cleaned_traffic.parquet"
@@ -1192,8 +1206,13 @@ def test_fixture_clean_prints_period_counts(monkeypatch, capsys, tmp_path):
         )
         exclusions = _exclusions(repo)
         assert all(record["stage"].strip() == "clean" for record in exclusions)
-        _assert_listed(exclusions, NEGATIVE_ID, "automated")
-        _assert_listed(exclusions, DUP_ID, "automated")
+        negative = _assert_listed(exclusions, NEGATIVE_ID, "automated")
+        assert {record["reason"].strip() for record in negative} == {"negative_volume"}
+        assert {record["key"].strip() for record in negative} == {str(NEGATIVE_ID)}
+        duplicates = _assert_listed(exclusions, DUP_ID, "automated")
+        assert {record["reason"].strip() for record in duplicates} == {"duplicate_row"}
+        assert {record["key"].strip() for record in duplicates} == {str(DUP_ID)}
+        assert len(duplicates) == removed
         reads = _traffic_reads(seen)
         assert reads, "one year parquet is read at a time"
         for path in reads:
@@ -1211,18 +1230,13 @@ def test_fixture_clean_prints_period_counts(monkeypatch, capsys, tmp_path):
 def test_unexpected_minute_exits_2(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         _clean_asthma, clean_traffic, script = _require(
-            "An unexpected minute such as 10 exits 2 and the message names that minute."
+            "An automated minute of 10 is dropped and listed with reason "
+            "minute_not_quarter, and a year that is otherwise valid exits 0."
         )
-        monkeypatch.chdir(tmp_path)
-        _forbid_network(monkeypatch)
-        frame = pd.DataFrame(
-            [_automated_row(7, minute=10, vol=3, hour=4, day=2, month=6, year=2022)]
-        )
-        code, text, _value, _unused = _quiet_call(capsys, clean_traffic, frame, "automated")
-        text = _assert_exit(code, text)
-        assert _token(text, 10), text
-        assert not (tmp_path / "outputs").exists()
-        code, text, _repo, _seen = _run_script(
+        kept = _automated_row(9, minute=0, vol=3, hour=4, day=2, month=6, year=2022)
+        dropped = _automated_row(7, minute=10, vol=4, hour=5, day=2, month=6, year=2022)
+        frame = pd.DataFrame([kept, dropped])
+        code, text, repo, _seen = _run_script(
             monkeypatch,
             capsys,
             tmp_path,
@@ -1231,8 +1245,147 @@ def test_unexpected_minute_exits_2(monkeypatch, capsys, tmp_path):
             _selection([_period("2022", "automated", [2022])]),
             {("automated", 2022): frame},
         )
+        assert code == 0, (
+            "a fixture clean that includes automated minute 10 exits 0; "
+            f"got exit {code}: {text}"
+        )
+        lines = _lines(text)
+        assert lines.count("2022 1") == 1, text
+        _asthma, traffic_path, _log = _outputs(repo)
+        stored = _by_id(_rows(pd.read_parquet(traffic_path), TRAFFIC_COLUMNS))
+        assert 7 not in stored, "minute 10 is absent from cleaned_traffic"
+        assert _number(stored[9]["minute"]) == 0
+        assert _number(stored[9]["vol"]) == pytest.approx(3)
+        assert _flag(stored[9]["hour_complete"]) is False
+        _one_exclusion(_exclusions(repo), 7, "minute_not_quarter")
+        monkeypatch.chdir(tmp_path)
+        _forbid_network(monkeypatch)
+        code, text, value, _unused = _quiet_call(capsys, clean_traffic, frame, "automated")
+        assert code == 0, (
+            "clean_traffic drops automated minute 10 and exits 0; "
+            f"got exit {code}: {text}"
+        )
+        by_id = _by_id(_rows(value, TRAFFIC_COLUMNS))
+        assert 7 not in by_id, "minute 10 is absent from cleaned rows"
+        assert _number(by_id[9]["minute"]) == 0
+        assert _number(by_id[9]["vol"]) == pytest.approx(3)
+        assert not (tmp_path / "outputs").exists()
+
+
+def test_non_quarter_automated_minute_is_dropped_and_listed(monkeypatch, capsys, tmp_path):
+    with _guard_repo():
+        _clean_asthma, clean_traffic, script = _require(
+            "An automated integer minute outside {0, 15, 30, 45} is dropped "
+            "and listed with minute_not_quarter. An unparseable automated minute "
+            "still exits 2 and does not write cleaned_traffic."
+        )
+        unparsed = _automated_row(77, minute=0, vol=3, year=2019)
+        unparsed["mm"] = "not-a-minute"
+        code, text, repo, _seen = _run_script(
+            monkeypatch,
+            capsys,
+            tmp_path,
+            script,
+            [_asthma_row()],
+            _selection([_period("2019", "automated", [2019])]),
+            {("automated", 2019): pd.DataFrame([unparsed])},
+        )
         text = _assert_exit(code, text)
-        assert _token(text, 10), text
+        assert _token(text, "not-a-minute"), text
+        assert not (repo / "outputs" / "data" / "cleaned_traffic.parquet").is_file(), (
+            "cleaned_traffic is not written when an automated minute does not parse"
+        )
+        duplicate = _automated_row(18, minute=0, vol=1)
+        rows = [
+            _automated_row(11, minute=0, vol=1),
+            _automated_row(12, minute=15, vol=2),
+            _automated_row(13, minute=30, vol=3),
+            _automated_row(14, minute=45, vol=4),
+            _automated_row(16, minute=0, vol=0),
+            _automated_row(17, minute=15, vol=-4),
+            _automated_row(20, minute=20, vol=6),
+            _automated_row(50, minute=50, vol=7),
+            duplicate,
+            copy.deepcopy(duplicate),
+        ]
+        frame = pd.DataFrame(rows)
+        kept_volumes = [1.0, 2.0, 3.0, 4.0, 0.0, 1.0]
+        threshold = float(np.quantile(kept_volumes, 0.999))
+        expected_flags = {
+            identity
+            for identity, volume in (
+                (11, 1.0),
+                (12, 2.0),
+                (13, 3.0),
+                (14, 4.0),
+                (16, 0.0),
+                (18, 1.0),
+            )
+            if volume > threshold
+        }
+        monkeypatch.chdir(tmp_path)
+        _forbid_network(monkeypatch)
+        code, text, value, _unused = _quiet_call(capsys, clean_traffic, frame, "automated")
+        assert code == 0, (
+            "automated minutes 20 and 50 are dropped and the year exits 0; "
+            f"got exit {code}: {text}"
+        )
+        by_id = _by_id(_rows(value, TRAFFIC_COLUMNS))
+        assert 20 not in by_id, "minute 20 is absent from cleaned rows"
+        assert 50 not in by_id, "minute 50 is absent from cleaned rows"
+        assert 17 not in by_id, "a negative volume is excluded"
+        for identity, minute, volume in (
+            (11, 0, 1),
+            (12, 15, 2),
+            (13, 30, 3),
+            (14, 45, 4),
+        ):
+            assert _number(by_id[identity]["minute"]) == minute
+            assert _number(by_id[identity]["vol"]) == pytest.approx(volume)
+            assert _flag(by_id[identity]["hour_complete"]) is False
+        assert _number(by_id[16]["vol"]) == pytest.approx(0), "a zero volume remains"
+        assert _number(by_id[18]["vol"]) == pytest.approx(1)
+        code, text, repo, _seen = _run_script(
+            monkeypatch,
+            capsys,
+            tmp_path,
+            script,
+            [_asthma_row()],
+            _selection([_period("2019", "automated", [2019])]),
+            {("automated", 2019): frame},
+        )
+        assert code == 0, (
+            "a fixture clean that includes automated minutes 20 and 50 exits 0; "
+            f"got exit {code}: {text}"
+        )
+        _assert_period_lines(text, {"2019": 1}, 1, len(expected_flags))
+        _asthma, traffic_path, log_path = _outputs(repo)
+        assert "duplicates removed 1" in log_path.read_text(encoding="utf-8")
+        stored = _by_id(_rows(pd.read_parquet(traffic_path), TRAFFIC_COLUMNS))
+        assert set(stored) == {11, 12, 13, 14, 16, 18}
+        assert _number(stored[16]["vol"]) == pytest.approx(0), "a zero volume remains"
+        for identity, minute in ((11, 0), (12, 15), (13, 30), (14, 45)):
+            assert _number(stored[identity]["minute"]) == minute
+        exclusions = _exclusions(repo)
+        _one_exclusion(exclusions, 20, "minute_not_quarter")
+        _one_exclusion(exclusions, 50, "minute_not_quarter")
+        _one_exclusion(exclusions, 17, "negative_volume")
+        _one_exclusion(exclusions, 18, "duplicate_row")
+        assert not any(record["key"].strip() == "16" for record in exclusions), (
+            "a zero volume stays out of exclusions_clean"
+        )
+        quarter_ids = {"11", "12", "13", "14"}
+        assert not any(
+            record["reason"].strip() == "minute_not_quarter"
+            and record["key"].strip() in quarter_ids
+            for record in exclusions
+        )
+        got_flags = {
+            identity
+            for identity, record in stored.items()
+            if _flag(record["high_count_flag"])
+        }
+        assert got_flags == expected_flags
 
 
 def test_historical_minute_exits_2(monkeypatch, capsys, tmp_path):
@@ -1363,7 +1516,13 @@ def test_negative_volume_is_excluded_and_zero_remains(monkeypatch, capsys, tmp_p
         stored = _by_id(_rows(pd.read_parquet(traffic_path), TRAFFIC_COLUMNS))
         assert 55 not in stored, "a negative volume is absent from the parquet"
         assert _number(stored[56]["vol"]) == pytest.approx(0), "a zero volume remains"
-        _assert_listed(_exclusions(repo), 55, "automated")
+        exclusions = _exclusions(repo)
+        negative = _assert_listed(exclusions, 55, "automated")
+        assert [record["reason"].strip() for record in negative] == ["negative_volume"]
+        assert [record["key"].strip() for record in negative] == ["55"]
+        assert not any(record["key"].strip() == "56" for record in exclusions), (
+            "a zero volume stays out of exclusions_clean"
+        )
 
 
 def test_historical_volume_is_not_divided_and_aadt_becomes_vol(monkeypatch, capsys, tmp_path):
