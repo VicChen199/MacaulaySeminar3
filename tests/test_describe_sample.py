@@ -437,3 +437,91 @@ def test_missing_merged_file_exits_2(monkeypatch, capsys, tmp_path):
         assert code == 2, text
         assert "final_merged_dataset.csv" in text
         assert not (repo / YEAR_PATH).exists()
+
+
+def test_coverage_map_reprojects_state_plane_monitors(monkeypatch, tmp_path):
+    reason = (
+        "A coverage map keeps state-plane monitors on the neighborhood basemap, "
+        "labels each neighborhood, and does not collapse the map to a cluster of dots."
+    )
+    with _guard_repo():
+        _primary, _tables, sample_figures, _script = _require(reason)
+        monkeypatch.chdir(tmp_path)
+        calls = _forbid_network(monkeypatch)
+        merged, locations, basemap, selection = _state_plane_bundle(tmp_path, keep_crs=True)
+        output = tmp_path / "figures"
+        sample_figures(merged, locations, basemap, output, "2019", selection)
+        png = output / "S7_coverage_map_2019.png"
+        pdf = output / "S7_coverage_map_2019.pdf"
+        assert _blue_fraction(png) > 0.15
+        text = _pdf_text(pdf)
+        assert "101" in text
+        assert "eligible" in text
+        assert "2019 eligible 1" in text
+        assert calls == []
+
+
+def test_coverage_map_reads_state_plane_geojson_without_crs(monkeypatch, tmp_path):
+    reason = (
+        "State-plane coordinates in a GeoJSON file with no crs member still "
+        "land on the basemap instead of a white field."
+    )
+    with _guard_repo():
+        _primary, _tables, sample_figures, _script = _require(reason)
+        monkeypatch.chdir(tmp_path)
+        calls = _forbid_network(monkeypatch)
+        merged, locations, basemap, selection = _state_plane_bundle(tmp_path, keep_crs=False)
+        output = tmp_path / "figures"
+        sample_figures(merged, locations, basemap, output, "2019", selection)
+        assert _blue_fraction(output / "S7_coverage_map_2019.png") > 0.15
+        assert "101" in _pdf_text(output / "S7_coverage_map_2019.pdf")
+        assert calls == []
+
+
+def _state_plane_bundle(tmp_path, keep_crs):
+    import geopandas as gpd
+    from pyproj import Transformer
+    from shapely.geometry import Point, box
+
+    polygon = box(-74.02, 40.70, -73.90, 40.82)
+    basemap = tmp_path / "UHF42.geo.json"
+    gpd.GeoDataFrame(
+        {"GEOCODE": [101], "GEONAME": ["Kingsbridge - Riverdale"]},
+        geometry=[polygon],
+        crs="EPSG:4326",
+    ).to_file(basemap, driver="GeoJSON")
+    forward = Transformer.from_crs("EPSG:4326", "EPSG:2263", always_xy=True)
+    x_coord, y_coord = forward.transform(-73.96, 40.76)
+    points = gpd.GeoDataFrame(
+        {
+            "monitoring_location_id": ["inside", "far"],
+            "uhf42_id": ["101", "999"],
+            "assignment": ["interior", "outside_nyc"],
+            "source_crs": ["EPSG:2263", "EPSG:2263"],
+        },
+        geometry=[Point(x_coord, y_coord), Point(500000, 500000)],
+        crs="EPSG:2263",
+    )
+    locations = tmp_path / "locations.geojson"
+    points.to_file(locations, driver="GeoJSON")
+    if not keep_crs:
+        payload = json.loads(locations.read_text(encoding="utf-8"))
+        payload.pop("crs", None)
+        locations.write_text(json.dumps(payload), encoding="utf-8")
+    merged = pd.DataFrame([_row(101, "2019", 10.0, 20.0, 6, "Bronx")])
+    return merged, locations, basemap, _selection([_included("2019")])
+
+
+def _blue_fraction(path):
+    import matplotlib.pyplot as plt
+
+    image = plt.imread(path)
+    rgb = image[..., :3]
+    if rgb.dtype.kind != "f":
+        rgb = rgb.astype(float) / 255.0
+    blue = (
+        (np.abs(rgb[..., 0] - 76 / 255) < 0.08)
+        & (np.abs(rgb[..., 1] - 120 / 255) < 0.08)
+        & (np.abs(rgb[..., 2] - 168 / 255) < 0.08)
+    )
+    return float(blue.mean())

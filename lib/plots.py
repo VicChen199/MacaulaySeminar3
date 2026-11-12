@@ -9,6 +9,8 @@ matplotlib.use("Agg")
 matplotlib.rcParams["pdf.compression"] = 0
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
 
@@ -16,6 +18,11 @@ from lib.describe import _included_labels, _label, _period_rows, _valid_mask, di
 
 EMPTY_NOTE = "no eligible neighborhood is available"
 MASK_NOTE = "Missing cells are masked"
+_ELIGIBLE_COLOR = "#4c78a8"
+_OTHER_COLOR = "#d9d9d9"
+_EDGE_COLOR = "#333333"
+_ID_COLUMNS = ("uhf42_id", "uhfcode", "geocode", "geoid", "uhf_code", "uhf")
+_NAME_COLUMNS = ("geoname", "uhf42_name", "uhfname", "uhf_name", "name")
 _STEMS = (
     ("S1_traffic_distribution", "traffic_mean_vehicles_per_hour"),
     ("S2_asthma_distribution", "asthma_ed_rate_per_10000"),
@@ -132,9 +139,9 @@ def _boxes(frame, variable, stem, output):
 
 
 def _coverage_map(frame, locations, basemap, period, output):
-    figure, axis = plt.subplots()
+    figure, axis = plt.subplots(figsize=(9, 9))
     count = _eligible_count(frame, period)
-    _draw_basemap(axis, basemap, locations)
+    _draw_basemap(axis, basemap, locations, _eligible_ids(frame, period))
     slug = _label(period).replace(" ", "_")
     stem = f"S7_coverage_map_{slug}"
     if count == 0:
@@ -153,15 +160,213 @@ def _coverage_map(frame, locations, basemap, period, output):
     return _save(figure, output / stem, title)
 
 
-def _draw_basemap(axis, basemap, locations):
-    boundaries = gpd.read_file(basemap)
-    boundaries.plot(ax=axis, color="#d9d9d9", edgecolor="#333333")
-    location_path = Path(locations)
-    if location_path.is_file():
-        points = gpd.read_file(location_path)
-        if not points.empty:
-            points.plot(ax=axis, color="#333333", markersize=8)
+def _eligible_ids(frame, period):
+    rows = _period_rows(frame, period)
+    if rows.empty or "uhf42_id" not in rows.columns:
+        return set()
+    valid = rows.loc[_valid_mask(rows)]
+    return {
+        key
+        for key in (_uhf_key(value) for value in valid["uhf42_id"])
+        if key and key != "0"
+    }
+
+
+def _draw_basemap(axis, basemap, locations, eligible_ids):
+    """Draw one map in the basemap CRS and keep that extent.
+
+    Monitoring locations are stored in EPSG:2263. Plotting those feet on a
+    longitude/latitude basemap collapses the neighborhoods to a speck and
+    leaves the monitors as a cluster on a white field.
+    """
+
+    boundaries = _read_boundaries(basemap)
+    if boundaries.empty:
+        axis.set_axis_off()
+        return
+    keys, names = _neighborhood_labels(boundaries)
+    colors = [
+        _ELIGIBLE_COLOR if key in eligible_ids else _OTHER_COLOR for key in keys
+    ]
+    boundaries.plot(ax=axis, color=colors, edgecolor=_EDGE_COLOR, linewidth=0.6)
+    points = _aligned_points(locations, boundaries.crs)
+    has_points = points is not None and not points.empty
+    if has_points:
+        points.plot(ax=axis, color="#222222", markersize=8, alpha=0.85, zorder=3)
+    _lock_extent(axis, boundaries)
+    axis.set_aspect("equal", adjustable="box")
+    _label_neighborhoods(axis, boundaries, keys, names, eligible_ids)
     axis.set_axis_off()
+    _coverage_legend(axis, has_points)
+
+
+def _read_boundaries(basemap):
+    boundaries = gpd.read_file(basemap)
+    if boundaries.empty:
+        return boundaries
+    if boundaries.crs is None:
+        boundaries = boundaries.set_crs(_detected_epsg(boundaries))
+    return boundaries
+
+
+def _neighborhood_labels(boundaries):
+    id_column = _property_column(boundaries, _ID_COLUMNS)
+    name_column = _property_column(boundaries, _NAME_COLUMNS)
+    count = len(boundaries.index)
+    keys = (
+        [_uhf_key(value) for value in boundaries[id_column].tolist()]
+        if id_column
+        else [""] * count
+    )
+    names = (
+        [_label(value) for value in boundaries[name_column].tolist()]
+        if name_column
+        else [""] * count
+    )
+    return keys, names
+
+
+def _aligned_points(locations, target_crs):
+    location_path = Path(locations)
+    if not location_path.is_file() or target_crs is None:
+        return None
+    points = gpd.read_file(location_path)
+    if points.empty:
+        return points
+    points = _correct_point_crs(points)
+    if points.crs is None:
+        return points.iloc[0:0]
+    try:
+        return points.to_crs(target_crs)
+    except Exception:
+        return points.iloc[0:0]
+
+
+def _correct_point_crs(points):
+    detected = _detected_epsg(points)
+    current = _epsg_code(points.crs)
+    detected_code = _epsg_code(detected)
+    if current is None:
+        return points.set_crs(detected)
+    # GeoJSON with no crs member is read as EPSG:4326 even when the
+    # coordinates are state-plane feet.
+    if current == 4326 and detected_code not in {None, 4326}:
+        return points.set_crs(detected, allow_override=True)
+    return points
+
+
+def _detected_epsg(frame):
+    xs = []
+    ys = []
+    for geom in frame.geometry:
+        if geom is None or geom.is_empty:
+            continue
+        point = geom.representative_point()
+        xs.append(float(point.x))
+        ys.append(float(point.y))
+    if not xs:
+        return "EPSG:4326"
+    x_coord = float(np.median(xs))
+    y_coord = float(np.median(ys))
+    if -180 <= x_coord <= 180 and -90 <= y_coord <= 90:
+        return "EPSG:4326"
+    if abs(x_coord) > 1000 and abs(y_coord) > 1000:
+        return "EPSG:2263"
+    return "EPSG:4326"
+
+
+def _epsg_code(crs):
+    if crs is None:
+        return None
+    if isinstance(crs, str):
+        token = crs.split(":")[-1]
+        return int(token) if token.isdigit() else None
+    try:
+        return crs.to_epsg()
+    except Exception:
+        return None
+
+
+def _property_column(frame, options):
+    lookup = {str(column).casefold(): column for column in frame.columns}
+    for name in options:
+        if name in lookup:
+            return lookup[name]
+    return None
+
+
+def _uhf_key(value):
+    text = _label(value)
+    if text == "":
+        return ""
+    try:
+        number = float(text)
+    except ValueError:
+        return text
+    if number != number:
+        return ""
+    if number.is_integer():
+        return str(int(number))
+    return text
+
+
+def _lock_extent(axis, boundaries):
+    minx, miny, maxx, maxy = boundaries.total_bounds
+    if not np.isfinite([minx, miny, maxx, maxy]).all():
+        return
+    span_x = maxx - minx
+    span_y = maxy - miny
+    pad_x = span_x * 0.04 if span_x else 0.01
+    pad_y = span_y * 0.04 if span_y else 0.01
+    axis.set_xlim(minx - pad_x, maxx + pad_x)
+    axis.set_ylim(miny - pad_y, maxy + pad_y)
+
+
+def _label_neighborhoods(axis, boundaries, keys, names, eligible_ids):
+    for geom, key, name in zip(boundaries.geometry, keys, names):
+        text = _map_label(key, name)
+        if text == "" or geom is None or geom.is_empty:
+            continue
+        point = geom.representative_point()
+        axis.text(
+            point.x,
+            point.y,
+            text,
+            ha="center",
+            va="center",
+            fontsize=5.5,
+            color="white" if key in eligible_ids else "#222222",
+            clip_on=True,
+            zorder=4,
+        )
+
+
+def _map_label(key, name):
+    if key and key != "0":
+        return key
+    if name:
+        return name
+    return ""
+
+
+def _coverage_legend(axis, has_points):
+    handles = [
+        Patch(facecolor=_ELIGIBLE_COLOR, edgecolor=_EDGE_COLOR, label="eligible"),
+        Patch(facecolor=_OTHER_COLOR, edgecolor=_EDGE_COLOR, label="other"),
+    ]
+    if has_points:
+        handles.append(
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="none",
+                markerfacecolor="#222222",
+                markersize=5,
+                label="monitor",
+            )
+        )
+    axis.legend(handles=handles, loc="lower right", frameon=True, fontsize=8)
 
 
 def _save(figure, stem_path, title):
