@@ -60,3 +60,9 @@ commit: ac75b8de56e0f2a42446da415e42d71ca91158c3
 attempts: 1
 result: passed
 commit: 8f7dbcb6b0af2cd4b1ce7ae052dfdf9114cbf9a8
+
+## audit-year-from-date / Count audit years from a date alias
+attempts: 2
+repairs: 1
+result: passed
+commit: be7cc31

@@ -79,10 +79,10 @@ An operation is one script invocation or one `pytest` invocation. Scripts share 
 
 caller: Terminal, the command that starts the audit.
 request: `python scripts/01_audit_sources.py`. Arguments: none. The process reads these config fields: `api.app_token` (str, optional), `api.timeout_seconds` (int), `api.max_retries` (int), `api.user_agent` (str), `api.automated.base_url` (str), `api.historical.base_url` (str), `api.aadt.base_url` (str), `years.targets` (list of int), `years.excluded` (list of int), `asthma.raw_dir` (str), `fields.automated` / `fields.historical` / `fields.aadt` (tables of canonical name → list of str aliases), `borough_aliases` (table of str → list of str).
-handler: `load_config`. `inventory_asthma` requires exactly one `.csv` or `.xlsx` in `asthma.raw_dir`, records the original `TimePeriod` labels, and classifies each label with the period rule in Data model. `fetch_schema` requests `$limit=1` from each of the three APIs and writes the live JSON keys. `fetch_year_counts` requests `count(*)` with `$where` for each target year, plus one grouped year list per API. The year field is the first configured alias present in the live keys. A missing required alias, a missing asthma file, or more than one asthma file stops the script. No traffic volumes are paged.
+handler: `load_config`. `inventory_asthma` requires exactly one `.csv` or `.xlsx` in `asthma.raw_dir`, records the original `TimePeriod` labels, and classifies each label with the period rule in Data model. `fetch_schema` requests `$limit=1` from each of the three APIs and writes the live JSON keys. `fetch_year_counts` requests `count(*)` with `$where` for each target year, plus one grouped year list per API. The year field is the first configured year alias present in the live keys. `fields.aadt.year` includes `aadt_year`, and a text sample is quoted. When no year alias is present and that source's first configured date alias is present, the `$where` and the grouped query both use `date_extract_y` on that alias, with the target year unquoted. `fields.historical.date` is `date`. Automated and AADT have no date alias. `schema_ok` is true for either resolution. A source with neither a year alias nor a date alias, a missing asthma file, or more than one asthma file stops the script. No traffic volumes are paged. No year column is written onto a traffic extract.
 stages: Terminal, Python, Config, AsthmaExport, Socrata, Outputs, Terminal.
 response: `status` str (`ok`, `empty`, or `error`), `exit_code` int (0, 2, or 1), `message` str, and `outputs/audit/schema_snapshot.json`, `outputs/audit/asthma_time_periods.csv` (table `asthma_time_periods`), `outputs/audit/traffic_year_counts.csv` (table `traffic_year_counts`).
-screen: On success the terminal prints the period labels, each label's kind (`year` or `pooled`), and the year counts for the three traffic APIs. On an empty export (headers present, zero rows) it prints that the export has no rows and exits 2. On a missing or ambiguous export, a missing year field, or a failed count query, it prints the path or the live column names and exits 2. On a network or parse failure it prints the URL and exits 1.
+screen: On success the terminal prints the period labels, each label's kind (`year` or `pooled`), and the year counts for the three traffic APIs. On an empty export (headers present, zero rows) it prints that the export has no rows and exits 2. On a missing or ambiguous export, a source with neither a year alias nor a date alias, or a failed count query, it prints the path or the live column names and exits 2. On a network or parse failure it prints the URL and exits 1.
 diagram:
 
 ```mermaid
@@ -449,10 +449,10 @@ flowchart LR
 
 1. Screen: Terminal. The person places one asthma CSV or XLSX in `data/raw/asthma/` and runs the audit command.
 2. Request: `python scripts/01_audit_sources.py`. Trace `audit-sources`.
-3. Handler: `inventory_asthma` classifies `TimePeriod` labels. `fetch_schema` and `fetch_year_counts` record live fields and year counts. A pooled label stays one period.
+3. Handler: `inventory_asthma` classifies `TimePeriod` labels. `fetch_schema` and `fetch_year_counts` record live fields and year counts. A year alias wins. Otherwise a configured date alias is counted with `date_extract_y`. A pooled label stays one period.
 4. Tables: reads `config/pipeline.toml` and the asthma export; writes `asthma_time_periods` and `traffic_year_counts`. Invariant: every stored period id is the original label, and a label that spans several years has `period_kind=pooled`.
 5. Response: status, exit code, and the audit paths.
-6. Screen: the terminal lists period kinds and year counts. An empty export, a missing file, or a missing year field exits 2 with the path or the live columns. A network failure exits 1.
+6. Screen: the terminal lists period kinds and year counts. An empty export, a missing file, or a source with neither a year alias nor a date alias exits 2 with the path or the live columns. A network failure exits 1.
 
 This journey uses `audit-sources`.
 
@@ -621,7 +621,7 @@ This journey uses `run-tests`.
 | stats.alpha | float | 0.05 |
 | stats.bootstrap_comparisons | bool | false |
 
-Field aliases are lists of strings. The first alias that appears in the live schema wins. Automated aliases include year `yr`, month `m`, day `d`, hour `hh`, minute `mm`, volume `vol`, segment `segmentid`, wkt `wktgeom`, direction `direction`, borough `boro`, request `requestid`. Historical and AADT alias lists are in the same TOML tables and are confirmed against `schema_snapshot.json`. An empty match stops the script that needed the field.
+Field aliases are lists of strings. The first alias that appears in the live schema wins. Automated aliases include year `yr`, month `m`, day `d`, hour `hh`, minute `mm`, volume `vol`, segment `segmentid`, wkt `wktgeom`, direction `direction`, borough `boro`, request `requestid`. Historical and AADT alias lists are in the same TOML tables and are confirmed against `schema_snapshot.json`. AADT's year list also includes `aadt_year`. Historical's date list is `date`. In `fetch_year_counts` only, a live date alias is counted with `date_extract_y` when no year alias is present. An empty match stops the script that needed the field. A year count stops when the live keys contain neither a year alias nor that source's date alias.
 
 Borough aliases map source tokens onto Manhattan, Bronx, Brooklyn, Queens, and Staten Island. An unknown token stops cleaning.
 
@@ -705,7 +705,7 @@ For automated and historical counts, a complete hour is the sum of four distinct
 
 | id | call | request | response | errors | caller | stages |
 | --- | --- | --- | --- | --- | --- | --- |
-| audit-sources | python scripts/01_audit_sources.py | no CLI args; config api urls, year lists, asthma.raw_dir, field aliases | status str, exit_code int, asthma_time_periods, traffic_year_counts, schema_snapshot.json | exit 2 missing export, empty export, unknown period, missing year field; exit 1 network | Terminal | Terminal, Python, Config, AsthmaExport, Socrata, Outputs, Terminal |
+| audit-sources | python scripts/01_audit_sources.py | no CLI args; config api urls, year lists, asthma.raw_dir, field aliases, historical date alias | status str, exit_code int, asthma_time_periods, traffic_year_counts, schema_snapshot.json | exit 2 missing export, empty export, unknown period, neither year alias nor date alias; exit 1 network | Terminal | Terminal, Python, Config, AsthmaExport, Socrata, Outputs, Terminal |
 | select-sources | python scripts/02_select_sources.py | no CLI args; audit files plus thresholds, mix_min_traffic_r, geography, pool.require_all_years | status str, exit_code int, source_selection.json, dataset_source_comparison.csv, coverage_for_selection.csv | exit 2 no included period, bad shapefile, unresolved hours, bad page; exit 1 network | Terminal | Terminal, Python, Config, Outputs, GeographyRepo, GeographyLocal, Socrata, TrafficRaw, Outputs, Terminal |
 | download-traffic | python scripts/03_download_traffic.py | no CLI args; source_selection.json, page_size, order :id, retries | status str, exit_code int, records.parquet, manifest.json, download_log.csv | exit 2 count mismatch, duplicate :id, checkpoint mismatch; exit 1 HTTP 4xx or retries exhausted | Terminal | Terminal, Python, Config, Outputs, Socrata, TrafficRaw, Outputs, Terminal |
 | clean | python scripts/04_clean.py | no CLI args; asthma export, records.parquet, field aliases, high_count_percentile | status str, exit_code int, cleaned_asthma.csv, cleaned_traffic.parquet, cleaning_log.md, exclusions_clean.csv | exit 2 zero asthma rows, duplicate neighborhood-period, bad minutes, unmapped direction, missing parquet | Terminal | Terminal, Python, Config, AsthmaExport, TrafficRaw, Outputs, Terminal |
@@ -736,7 +736,7 @@ The person sees these on the terminal, and in the written tables when a script g
 - Asthma export missing, or more than one file in `data/raw/asthma/`: exit 2, the expected directory printed.
 - Export with headers and zero rows: exit 2, status empty.
 - `TimePeriod` that cannot be classified, or two labels that overlap: exit 2, the label printed. A pooled label is listed as one period.
-- Socrata year field missing, count query failed, page count mismatch, duplicate `:id`, or checkpoint mismatch: exit 2, year and both counts printed, no `records.parquet` for that year.
+- Socrata year count with neither a year alias nor that source's date alias, count query failed, page count mismatch, duplicate `:id`, or checkpoint mismatch: exit 2, the live columns or the year and both counts printed, no `records.parquet` for that year.
 - HTTP 429 and 5xx: retried, then exit 1 if retries run out. Other 4xx: exit 1 with the URL.
 - No period meets the coverage thresholds: scenario D, comparison table written, exit 2. Later scripts do not run under `run_all.sh`.
 - Boundary file without 42 valid polygons, or ids that do not match asthma GeoIDs and no crosswalk: exit 2.
