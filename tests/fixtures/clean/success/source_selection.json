@@ -1,0 +1,37 @@
+{
+  "scenario": "2",
+  "mix_used": true,
+  "comparability_pass": true,
+  "comparability_r": 0.91,
+  "comparability_n": 30,
+  "periods": [
+    {
+      "period": "2019",
+      "source": "automated",
+      "years": [2019],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2015",
+      "source": "historical",
+      "years": [2015],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2022",
+      "source": "aadt",
+      "years": [2022],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2014",
+      "source": "historical",
+      "years": [2014],
+      "included": false,
+      "reason": "gap"
+    }
+  ]
+}

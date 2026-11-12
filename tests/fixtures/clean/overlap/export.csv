@@ -1,0 +1,4 @@
+TimePeriod,GeoID,uhf42_name,borough,asthma_ed_count,asthma_ed_rate_per_10000
+2015-2017,101,Harlem,Manhattan,1,1
+2016,101,Harlem,Manhattan,2,2
+2019,102,Other,Bronx,3,3

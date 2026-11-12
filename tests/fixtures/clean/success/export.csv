@@ -1,0 +1,9 @@
+TimePeriod,GeoID,uhf42_name,borough,asthma_ed_count,asthma_ed_rate_per_10000,Age,Measure
+2019,0101,Washington Heights,manhattan,10,*,4,ed
+2015-2017,102,Central Harlem,Bronx,s,0,99,adults
+2015 to 2016,103,East Harlem,queens,0,3.5,4,ed
+2018,104,Highbridge,Bronx,2,4,4,ed
+2020,501,Drop Year,Manhattan,1,1,4,ed
+2019-2022,502,Drop Range,Manhattan,1,1,4,ed
+Winter,503,Drop Label,Manhattan,1,1,4,ed
+2014,504,Drop Other,Manhattan,1,1,4,ed
