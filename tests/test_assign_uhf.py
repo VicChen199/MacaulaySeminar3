@@ -1140,6 +1140,7 @@ def test_fixture_does_not_create_repository_outputs_or_data(
         "Calling assign_points on a fixture must not create an outputs/ "
         "directory and must not call Socrata."
     )
+    existed = _existed()
     with _guard_repo():
         assign_points = _require_assign(reason)
         monkeypatch.chdir(tmp_path)
@@ -1156,8 +1157,12 @@ def test_fixture_does_not_create_repository_outputs_or_data(
         assert code == 0, text
         _assert_no_local_outputs(tmp_path)
         assert calls == [], "fixture test must not call Socrata or GitHub"
-        assert not (ROOT / "outputs").exists()
-        assert not (ROOT / "data").exists()
+        for path, was_there in existed.items():
+            if not was_there:
+                assert not path.exists(), (
+                    "assign_points on a fixture must not create "
+                    f"{path.name}/"
+                )
 
 
 def test_near_edge_and_overlapping_polygons_are_boundary(
