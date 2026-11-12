@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from lib.clean_asthma import CleanError
+from lib.config import load_config
 
 _QUARTERS = {0, 15, 30, 45}
 _OUTPUT = [
@@ -29,12 +30,15 @@ _OUTPUT = [
     "hour_complete",
     "high_count_flag",
 ]
-def clean_traffic(frame, config, source):
+def clean_traffic(frame, config, source=None):
     """Return cleaned rows, duplicates removed, and high-count flags.
 
     Does not write files and does not use the network. Exact duplicate
     rows are removed. Zero volumes stay. Negative volumes are excluded.
     """
+    if source is None and isinstance(config, str):
+        source = config
+        config = load_config()
     frame = frame if isinstance(frame, pd.DataFrame) else pd.DataFrame(frame)
     _reject_utc(frame)
     fields = _fields(config, source)
