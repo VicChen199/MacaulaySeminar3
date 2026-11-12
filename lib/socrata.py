@@ -44,25 +44,36 @@ def fetch_schema(config):
 def fetch_year_counts(config, schema):
     """Request count(*) for each target year and one grouped year list per API.
 
-    No traffic volumes are paged. schema_ok is true when the year alias was found.
+    No traffic volumes are paged. schema_ok is true when a year alias, or that
+    source's date alias, was found. date_extract_y is used only here, and only
+    when the field table has a date alias and no configured year alias is live.
     """
     samples = getattr(schema, "samples", {})
     rows = []
     for source in _SOURCES:
         raw = schema[source]
         live = _live_names(raw)
-        field = _year_field(live, config["fields"][source]["year"])
+        fields = config["fields"][source]
+        field = _year_field(live, fields["year"])
+        extract = field is None
+        if extract:
+            field = _year_field(live, fields.get("date") or [])
         if field is None:
             raise SocrataError(", ".join(live), 2)
         url = config["api"][source]["base_url"]
         sample = samples.get(source) or _embedded_sample(raw)
-        _request_grouped_years(url, field, config, live)
+        grouped = f"date_extract_y({field})" if extract else field
+        _request_grouped_years(url, grouped, config, live)
         for year in config["years"]["targets"]:
-            count = _request_year_count(url, field, int(year), sample, config, live)
+            year_number = int(year)
+            where = f"date_extract_y({field})={year_number}" if extract else None
+            count = _request_year_count(
+                url, field, year_number, sample, config, live, where
+            )
             rows.append(
                 {
                     "source": source,
-                    "year": int(year),
+                    "year": year_number,
                     "record_count": count,
                     "schema_ok": True,
                 }
@@ -143,8 +154,9 @@ def _request_grouped_years(url, field, config, live):
         raise SocrataError(final_url, 1)
 
 
-def _request_year_count(url, field, year, sample, config, live):
-    where = _year_where(field, year, sample)
+def _request_year_count(url, field, year, sample, config, live, where=None):
+    if where is None:
+        where = _year_where(field, year, sample)
     payload, _final_url = _get_json(
         url,
         {"$select": "count(*)", "$where": where},
