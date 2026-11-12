@@ -1018,6 +1018,55 @@ def test_unparseable_asthma_value_exits_2(monkeypatch, capsys, tmp_path):
         assert _token(text, "NA"), text
 
 
+def test_portal_export_columns_are_renamed(monkeypatch, capsys, tmp_path):
+    with _guard_repo():
+        clean_asthma, _clean_traffic, _script = _require(
+            "Portal columns Geography, Borough, Number, and "
+            "Estimated annual rate per 10,000 are renamed before cleaning."
+        )
+        monkeypatch.chdir(tmp_path)
+        calls = _forbid_network(monkeypatch)
+        original = [
+            "TimePeriod",
+            "GeoID",
+            "Geography",
+            "Borough",
+            "Number",
+            "Estimated annual rate per 10,000",
+        ]
+        frame = pd.DataFrame(
+            [
+                {
+                    "TimePeriod": "2019",
+                    "GeoID": "0101",
+                    "Geography": "Washington Heights",
+                    "Borough": "Manhattan",
+                    "Number": "12",
+                    "Estimated annual rate per 10,000": "34.5",
+                }
+            ],
+            columns=original,
+        )
+        code, text, value, _unused = _quiet_call(capsys, clean_asthma, frame)
+        assert code == 0, text
+        got = _asthma_map(value)
+        assert list(got) == [("101", "2019")]
+        _assert_asthma(
+            got[("101", "2019")],
+            name="Washington Heights",
+            borough="Manhattan",
+            kind="year",
+            years="2019",
+            count=12,
+            rate=34.5,
+        )
+        assert list(frame.columns) == original, "the caller's columns stay portal names"
+        assert calls == [], "fixture test must not call Socrata"
+        assert not (tmp_path / "outputs").exists(), (
+            "clean_asthma on a fixture must not write outputs/"
+        )
+
+
 def test_unknown_borough_exits_2(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         clean_asthma, _clean_traffic, script = _require(
