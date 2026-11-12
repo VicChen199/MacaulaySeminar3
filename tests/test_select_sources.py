@@ -1584,6 +1584,91 @@ def test_scenario_4_aadt_is_not_mixed_with_another_source(monkeypatch, capsys, t
         assert included == {"aadt"}
 
 
+def test_paginate_uses_date_extract_when_historical_has_no_year(monkeypatch, tmp_path):
+    """Historical 2023 has date and no year column, and zero rows."""
+    with _guard_repo():
+        paginate, _score, _select, _boundaries = _contract()
+        monkeypatch.chdir(tmp_path)
+        _block_real_http(monkeypatch)
+        live = ["id", "segmentid", "date", "_12_00_1_00_am"]
+        schema = _Snapshot(
+            {"historical": live},
+            {"historical": {"date": "2019-06-01T00:00:00.000"}},
+        )
+        pages = {
+            2023: [],
+            2019: [
+                {
+                    ":id": 1,
+                    "id": "1",
+                    "segmentid": "seg",
+                    "date": "2019-06-01T00:00:00.000",
+                    "direction": "NB",
+                }
+            ],
+        }
+        calls = []
+
+        def send(self, prepared, **kwargs):
+            decoded, query = _query(prepared.url)
+            if not decoded.startswith(_config()["api"]["historical"]["base_url"]):
+                raise AssertionError(f"fixture test must not call a real host ({prepared.url})")
+            years = _years_in(query["where"] or decoded)
+            assert len(years) == 1, decoded
+            year = years[0]
+            where = query["where"] or decoded
+            assert f"date_extract_y(date)={year}" in where, where
+            assert f"date_extract_y(date)='{year}'" not in where, where
+            if COUNT_RE.search(decoded):
+                calls.append({"kind": "count", "year": year, "where": where})
+                return _json_response([{"count": str(len(pages[year]))}], prepared.url)
+            offset = int(query["offset"] or "0")
+            limit = int(query["limit"] or "1")
+            page = pages[year][offset : offset + limit]
+            calls.append(
+                {
+                    "kind": "page",
+                    "year": year,
+                    "where": where,
+                    "select": query["select"],
+                    "returned": len(page),
+                }
+            )
+            return _json_response(page, prepared.url)
+
+        monkeypatch.setattr("requests.sessions.Session.send", send)
+        config = _page_config(4)
+        empty = tmp_path / "year=2023" / "coverage.parquet"
+        code, message, count = _call(paginate, config, "historical", 2023, schema, empty)
+        assert code == 0, message
+        assert count == 0
+        assert [call["kind"] for call in calls] == ["count"]
+        import pandas as pd
+
+        frame = pd.read_parquet(empty)
+        assert len(frame.index) == 0
+        assert "date" in list(frame.columns)
+        filled = tmp_path / "year=2019" / "coverage.parquet"
+        code, message, count = _call(paginate, config, "historical", 2019, schema, filled)
+        assert code == 0, message
+        assert count == 1
+        assert any(call["kind"] == "page" and call["year"] == 2019 for call in calls)
+        assert "date" in (calls[-1].get("select") or "")
+        missing = _Snapshot({"historical": ["id", "segmentid"]}, {})
+        code, message, _value = _call(
+            paginate,
+            config,
+            "historical",
+            2023,
+            missing,
+            tmp_path / "missing" / "coverage.parquet",
+        )
+        assert code == 2
+        assert "id" in message and "segmentid" in message
+        assert "date_extract_y" not in message
+        _assert_no_outputs(tmp_path)
+
+
 def test_hourly_definition_unresolved_exits_2(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         _contract()
