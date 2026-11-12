@@ -40,3 +40,8 @@ attempts: 3
 repairs: 2
 result: passed
 commit: 385f0bc21e32fca59bb947d552d0c749e2c39fb3
+
+## merge-analysis
+attempts: 1
+result: passed
+commit: fbc80b00957a1ec6acf8cf860c732806715734d0
