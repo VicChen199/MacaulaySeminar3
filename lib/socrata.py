@@ -45,8 +45,9 @@ def fetch_year_counts(config, schema):
     """Request count(*) for each target year and one grouped year list per API.
 
     No traffic volumes are paged. schema_ok is true when a year alias, or that
-    source's date alias, was found. date_extract_y is used only here, and only
-    when the field table has a date alias and no configured year alias is live.
+    source's date alias, was found. date_extract_y is used when no configured
+    year alias is live and the field table has a date alias. paginate uses the
+    same rule for its year filter.
     """
     samples = getattr(schema, "samples", {})
     rows = []
@@ -54,10 +55,7 @@ def fetch_year_counts(config, schema):
         raw = schema[source]
         live = _live_names(raw)
         fields = config["fields"][source]
-        field = _year_field(live, fields["year"])
-        extract = field is None
-        if extract:
-            field = _year_field(live, fields.get("date") or [])
+        field, extract = _year_source(live, fields)
         if field is None:
             raise SocrataError(", ".join(live), 2)
         url = config["api"][source]["base_url"]
@@ -130,6 +128,27 @@ def _year_field(live_keys, aliases):
         if alias in present:
             return alias
     return None
+
+
+def _year_source(live, fields):
+    """Return the live year field and whether the filter extracts it from a date.
+
+    A configured year alias wins. When none is live, the first live date alias
+    is filtered with date_extract_y and the year is not quoted.
+    """
+    field = _year_field(live, fields.get("year") or [])
+    if field is not None:
+        return field, False
+    field = _year_field(live, fields.get("date") or [])
+    if field is not None:
+        return field, True
+    return None, False
+
+
+def _year_clause(field, year, sample, extract):
+    if extract:
+        return f"date_extract_y({field})={int(year)}"
+    return _year_where(field, year, sample)
 
 
 def _parse_limit1(payload, url):
@@ -277,11 +296,14 @@ def paginate(config, source, year, schema, output_path):
         jsonl_path, checkpoint_path, source, year_number
     )
     live, sample = _schema_live_and_sample(schema, source)
-    year_name = _year_field(live, config["fields"][source]["year"])
+    fields = config["fields"][source]
+    year_name, extract = _year_source(live, fields)
     if year_name is None:
         raise SocrataError(f"{source} {year_number} {', '.join(live)}", 2)
     selected = _select_fields(config, source, live)
-    where = _year_where(year_name, year_number, sample)
+    if extract and year_name not in selected:
+        selected.append(year_name)
+    where = _year_clause(year_name, year_number, sample, extract)
     base_url = config["api"][source]["base_url"]
     _content, payload, _final_url = _exchange(
         base_url,
