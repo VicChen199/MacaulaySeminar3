@@ -90,10 +90,16 @@ def _run(shapefile):
             dtype="object",
         )
         updated.loc[resolved.index, "assignment"] = resolved["assignment"].tolist()
-        updated.loc[resolved.index, "rule"] = resolved["rule"].tolist()
         updated.loc[resolved.index, "uhf42_id"] = [
             _none(value) for value in resolved["uhf42_id"].tolist()
         ]
+        updates = resolved.attrs.get("rule_updates") or {}
+        rules = list(updated.attrs.get("rule") or [])
+        ids = updated["monitoring_location_id"].tolist()
+        if updates and len(rules) == len(ids):
+            updated.attrs["rule"] = [
+                updates.get(loc_id, rule) for loc_id, rule in zip(ids, rules)
+            ]
         updated.attrs["traffic_rows"] = traffic_rows
         updated.attrs["prepared_boundaries"] = prepared
         traffic_out, audit, exclusions = _package_outputs(updated, traffic_rows)
