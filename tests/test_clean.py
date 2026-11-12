@@ -349,6 +349,18 @@ def _by_id(records):
     return found
 
 
+def _record(records, identity, *, source, year):
+    matches = [
+        record
+        for record in records
+        if _identity(record[":id"]) == int(identity)
+        and _text(record["source"]) == source
+        and int(_number(record["year"])) == int(year)
+    ]
+    assert len(matches) == 1, (source, year, identity)
+    return matches[0]
+
+
 def _assert_local(value, year, month, day, hour, minute):
     assert not _is_null(value), "ts_local is America/New_York civil time"
     stamp = pd.Timestamp(value)
@@ -1094,8 +1106,23 @@ def test_fixture_clean_prints_period_counts(monkeypatch, capsys, tmp_path):
         assert identities.count(DUP_ID) == 1, "exact duplicate rows keep one copy"
         assert identities.count(NEGATIVE_ID) == 0, "a negative volume is excluded"
         assert identities.count(ZERO_ID) == 1, "a zero volume remains"
-        by_id = _by_id(traffic)
-        assert COVERAGE_ID not in by_id, "clean does not read coverage.parquet"
+        assert identities.count(41) == 2, (
+            "a historical row and an AADT row may share an :id"
+        )
+        assert COVERAGE_ID not in identities, "clean does not read coverage.parquet"
+        by_id = {}
+        for source, year, identity in (
+            ("automated", 2019, ZERO_ID),
+            ("automated", 2019, 11),
+            ("automated", 2019, 12),
+            ("automated", 2019, 13),
+            ("automated", 2019, 14),
+            ("automated", 2019, 15),
+            ("historical", 2015, 31),
+            ("historical", 2015, 32),
+            ("historical", 2015, 33),
+        ):
+            by_id[identity] = _record(traffic, identity, source=source, year=year)
         assert _number(by_id[ZERO_ID]["vol"]) == pytest.approx(0), "a zero volume remains"
         assert _flag(by_id[ZERO_ID]["high_count_flag"]) is False
         assert _text(by_id[11]["direction_normalized"]) == "NB"
@@ -1129,15 +1156,23 @@ def test_fixture_clean_prints_period_counts(monkeypatch, capsys, tmp_path):
         assert _flag(by_id[31]["hour_complete"]) is True
         assert _is_null(by_id[31]["minute"]) or _number(by_id[31]["minute"]) == 0
         _assert_local(by_id[31]["ts_local"], 2015, 6, 1, 9, 0)
-        assert _number(by_id[41]["vol"]) == pytest.approx(10), (
+        historical_41 = _record(traffic, 41, source="historical", year=2015)
+        assert _identity(historical_41[":id"]) == 41
+        assert _text(historical_41["source"]) == "historical"
+        assert _number(historical_41["vol"]) == pytest.approx(200), (
+            "the historical row 41 stays in the file"
+        )
+        aadt = _record(traffic, 41, source="aadt", year=2022)
+        assert _number(aadt["vol"]) == pytest.approx(10), (
             "an AADT value of 240 becomes vol 10"
         )
-        assert _number(by_id[41]["vol"]) != pytest.approx(999)
-        assert _is_null(by_id[41]["hour"]), "AADT leaves the hour null"
-        assert _flag(by_id[41]["hour_complete"]) is False
-        assert _text(by_id[41]["direction_normalized"]) == "North"
-        assert _text(by_id[41]["borough"]) == "Queens"
-        assert _text(by_id[41]["source"]) == "aadt"
+        assert _number(aadt["vol"]) != pytest.approx(999)
+        assert _is_null(aadt["hour"]), "AADT leaves the hour null"
+        assert _flag(aadt["hour_complete"]) is False
+        assert _text(aadt["direction_normalized"]) == "North"
+        assert _text(aadt["borough"]) == "Queens"
+        assert _text(aadt["source"]) == "aadt"
+        assert _identity(aadt[":id"]) == 41
         got_flags = set()
         for record in traffic:
             assert record["monitoring_location_id"] == "", (
