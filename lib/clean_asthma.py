@@ -16,6 +16,14 @@ _REQUIRED = (
     "asthma_ed_count",
     "asthma_ed_rate_per_10000",
 )
+# Environment & Health Data Portal export headers. TimePeriod and GeoID
+# already match the names this module reads.
+_PORTAL_COLUMNS = {
+    "Geography": "uhf42_name",
+    "Borough": "borough",
+    "Number": "asthma_ed_count",
+    "Estimated annual rate per 10,000": "asthma_ed_rate_per_10000",
+}
 _COLUMNS = [
     "uhf42_id",
     "uhf42_name",
@@ -45,11 +53,16 @@ def clean_asthma(frame, config=None):
     """Return one row per neighborhood and kept period.
 
     Does not write files and does not use the network. Age and measure
-    columns are ignored. A dropped period label is not a row.
+    columns are ignored. A dropped period label is not a row. Portal
+    headers Geography, Borough, Number, and
+    "Estimated annual rate per 10,000" are renamed to the internal
+    names before the required-column check. An internal name that is
+    already present is kept.
     """
     if config is None:
         config = load_config()
     frame = frame if isinstance(frame, pd.DataFrame) else pd.DataFrame(frame)
+    frame = _rename_portal_columns(frame)
     missing = [name for name in _REQUIRED if name not in frame.columns]
     if missing:
         raise CleanError(_present_columns(frame), 2)
@@ -108,6 +121,20 @@ def clean_asthma(frame, config=None):
 
 def _present_columns(frame):
     return ", ".join(str(column) for column in frame.columns)
+
+
+def _rename_portal_columns(frame):
+    present = {str(column) for column in frame.columns}
+    rename = {}
+    for column in frame.columns:
+        internal = _PORTAL_COLUMNS.get(str(column).strip())
+        if internal is None or internal in present:
+            continue
+        rename[column] = internal
+        present.add(internal)
+    if not rename:
+        return frame
+    return frame.rename(columns=rename)
 
 
 def _classify(label, targets, excluded):
