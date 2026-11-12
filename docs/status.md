@@ -66,3 +66,8 @@ attempts: 2
 repairs: 1
 result: passed
 commit: be7cc31f645a9e6e23604d20e12ff7101a6cc9c9
+
+## drop-non-quarter-minutes / Score past non-quarter automated minutes
+attempts: 1
+result: passed
+commit: ee2dda18fc36bba6b9b97763d490eebe361a320e
