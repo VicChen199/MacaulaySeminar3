@@ -188,8 +188,6 @@ def main():
     print(f"unmatched {unmatched}")
     print(f"on a boundary {boundary}")
     print(f"borough-mismatched {mismatched}")
-    if unmatched or boundary or mismatched:
-        return 2
     return 0
 
 

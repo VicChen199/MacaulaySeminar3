@@ -896,10 +896,11 @@ def test_interior_script_prints_assigned_count_and_exits_0(
         assert exclusion_rows == []
 
 
-def test_outside_point_prints_unmatched_and_exits_2(monkeypatch, capsys, tmp_path):
+def test_outside_point_prints_unmatched_and_exits_0(monkeypatch, capsys, tmp_path):
     reason = (
         "A point outside every polygon, with an empty lion_path, "
-        "prints the unmatched count and exits 2."
+        "prints the unmatched count, stays out of the joined traffic, "
+        "and exits 0."
     )
     with _guard_repo():
         assign_points, script = _require_script(reason)
@@ -941,8 +942,85 @@ def test_outside_point_prints_unmatched_and_exits_2(monkeypatch, capsys, tmp_pat
             ["101"],
             boundaries,
         )
-        assert script_code == 2, script_text
+        assert script_code == 0, script_text
         _assert_terminal(script_text, 0, 1, 0, 0)
+        joined = pd.read_parquet(_repo / TRAFFIC_OUT)
+        assert len(joined) == 0
+        exclusion_header, exclusion_rows = _csv_table(_repo / EXCLUSIONS_PATH)
+        assert exclusion_header == EXCLUSION_COLUMNS
+        assert len(exclusion_rows) == 1
+        assert exclusion_rows[0]["reason"].strip() == "outside_nyc"
+        assert exclusion_rows[0]["stage"].strip() == "assign-uhf"
+
+
+def test_non_interior_counts_are_excluded_and_exit_0(
+    monkeypatch, capsys, tmp_path
+):
+    reason = (
+        "An outside point, a boundary point, and a borough mismatch, with "
+        "an empty lion_path, are listed and omitted from the joined traffic. "
+        "Any one of those counts still exits 0 so later scripts can run."
+    )
+    with _guard_repo():
+        _assign_points, script = _require_script(reason)
+        from shapely.geometry import box
+
+        tolerance = _tolerance_feet()
+        near = tolerance * 0.5
+        far = tolerance + 2.0
+        traffic = _traffic(
+            [
+                _row("1", "inside", f"POINT({990000 + far} 201000)", borough="Manhattan"),
+                _row("2", "near-edge", f"POINT({990000 + near} 201000)", borough="Manhattan"),
+                _row("3", "wrong-boro", "POINT(994000 201000)", borough="Manhattan"),
+                _row("4", "outside", "POINT(980000 150000)", borough="Manhattan"),
+            ]
+        )
+        boundaries = _boundaries(
+            [
+                {
+                    "UHFCODE": "101",
+                    "BOROUGH": "Manhattan",
+                    "geometry": box(990000, 200000, 992000, 202000),
+                },
+                {
+                    "UHFCODE": "102",
+                    "BOROUGH": "Queens",
+                    "geometry": box(993000, 200000, 995000, 202000),
+                },
+            ],
+            "EPSG:2263",
+        )
+        code, text, repo, _opened = _run_script(
+            monkeypatch,
+            capsys,
+            tmp_path,
+            script,
+            traffic,
+            ["101", "102"],
+            boundaries,
+        )
+        assert code == 0, text
+        _assert_terminal(text, 1, 1, 1, 1)
+        assert load_config()["geography"]["lion_path"] == ""
+        joined = pd.read_parquet(repo / TRAFFIC_OUT)
+        assert _column_values(joined, "segment") == {"inside"}
+        header, rows = _csv_table(repo / EXCLUSIONS_PATH)
+        assert header == EXCLUSION_COLUMNS
+        reasons = {row["reason"].strip() for row in rows}
+        assert reasons == {"outside_nyc", "boundary", "borough_mismatch"}
+        assert {row["stage"].strip() for row in rows} == {"assign-uhf"}
+        locations = _read_locations(repo / LOCATIONS_PATH)
+        by_segment = {
+            _text(row["road_segment_id"]): _text(row["assignment"])
+            for _, row in locations.iterrows()
+        }
+        assert by_segment == {
+            "inside": "interior",
+            "near-edge": "boundary",
+            "wrong-boro": "borough_mismatch",
+            "outside": "outside_nyc",
+        }
 
 
 def test_origin_point_exits_2_and_message_contains_both_numbers(
