@@ -465,7 +465,7 @@ def _hour_mode(config, source, frame, year):
     if minute_col is not None:
         for value in frame[minute_col]:
             parsed = _parse_minute(value)
-            if parsed is not None and parsed not in _QUARTERS:
+            if parsed == "bad":
                 raise AuditError(
                     f"hourly_definition_unresolved {source} {int(year)}",
                     2,
