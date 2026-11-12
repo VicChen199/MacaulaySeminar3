@@ -6,6 +6,8 @@ import re
 
 import pandas as pd
 
+from lib.config import load_config
+
 _REQUIRED = (
     "TimePeriod",
     "GeoID",
@@ -39,12 +41,14 @@ class CleanError(Exception):
         self.exit_code = exit_code
 
 
-def clean_asthma(frame, config):
+def clean_asthma(frame, config=None):
     """Return one row per neighborhood and kept period.
 
     Does not write files and does not use the network. Age and measure
     columns are ignored. A dropped period label is not a row.
     """
+    if config is None:
+        config = load_config()
     frame = frame if isinstance(frame, pd.DataFrame) else pd.DataFrame(frame)
     missing = [name for name in _REQUIRED if name not in frame.columns]
     if missing:
