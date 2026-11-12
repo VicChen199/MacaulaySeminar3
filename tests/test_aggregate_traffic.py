@@ -1319,12 +1319,15 @@ def test_two_directions_sum_and_one_direction_keeps_its_hour(monkeypatch, capsys
         assert calls == []
 
 
-def test_third_direction_exits_2(monkeypatch, capsys, tmp_path):
+def test_three_directions_sum_when_every_direction_is_present(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         monkeypatch.chdir(tmp_path)
         calls = _forbid_network(monkeypatch)
         functions = _require_functions(
-            "A third direction exits 2 and the message contains the location id."
+            "A location that shows three directions keeps an hour only when "
+            "all three are complete, and the volume is their sum. The kept "
+            "direction is the labels sorted and joined with |. An hour missing "
+            "one of those directions is dropped. The call exits 0."
         )
         ids = _Ids()
         rows = []
@@ -1348,12 +1351,36 @@ def test_third_direction_exits_2(monkeypatch, capsys, tmp_path):
                     road_segment_id="seg-three",
                 )
             )
-        code, text, value = _quiet_call(
+        for direction, volumes in (
+            ("NB", (9, 9, 9, 9)),
+            ("SB", (9, 9, 9, 9)),
+        ):
+            rows.extend(
+                _quarter_rows(
+                    ids,
+                    loc="loc-three",
+                    uhf="101",
+                    year=2019,
+                    month=4,
+                    day=5,
+                    hour=9,
+                    volumes=volumes,
+                    direction=direction,
+                    request="R1",
+                    road_segment_id="seg-three",
+                )
+            )
+        code, text, hours = _quiet_call(
             capsys, functions["complete_hours"], _traffic_frame(rows)
         )
-        assert code == 2, text
-        assert "loc-three" in text
-        assert not isinstance(value, pd.DataFrame)
+        assert code == 0, text
+        assert "loc-three" not in text
+        combined = _where(hours, "monitoring_location_id", "loc-three")
+        assert len(combined) == 1, hours
+        assert _number(combined.iloc[0]["vol"]) == pytest.approx(22)
+        assert _text(combined.iloc[0]["direction_normalized"]) == "EB|NB|SB"
+        assert _text(combined.iloc[0]["session"]) == "R1"
+        assert _hour(combined.iloc[0]["hour"]) == 8
         _assert_no_local_writes(tmp_path)
         assert calls == []
 
@@ -2102,6 +2129,82 @@ def test_zero_eligible_neighborhoods_exit_0_and_write_coverage(monkeypatch, caps
         assert _valid_rows(uhf, "2018") == []
         _assert_invalid_means_are_null(uhf)
         _assert_coverage(repo, "2018", "401", 0, 0, False)
+
+
+def test_script_three_directions_sum_and_exit_0(monkeypatch, capsys, tmp_path):
+    with _guard_repo():
+        _functions, script = _require_script(
+            "A location with three directions does not stop aggregation. "
+            "An hour is kept only when all three directions are complete, "
+            "and the location mean is the sum of those directions."
+        )
+        ids = _Ids()
+        rows = []
+        for day in (3, 4):
+            for direction, volumes in (
+                ("NB", (1, 2, 3, 4)),
+                ("SB", (1, 1, 1, 1)),
+                ("EB", (2, 2, 2, 2)),
+            ):
+                rows.extend(
+                    _quarter_rows(
+                        ids,
+                        loc="loc-three",
+                        uhf="306",
+                        year=2023,
+                        month=10,
+                        day=day,
+                        hour=8,
+                        volumes=volumes,
+                        direction=direction,
+                        request="36597",
+                        road_segment_id="33662",
+                    )
+                )
+        for direction, volumes in (
+            ("NB", (9, 9, 9, 9)),
+            ("SB", (9, 9, 9, 9)),
+        ):
+            rows.extend(
+                _quarter_rows(
+                    ids,
+                    loc="loc-three",
+                    uhf="306",
+                    year=2023,
+                    month=10,
+                    day=3,
+                    hour=9,
+                    volumes=volumes,
+                    direction=direction,
+                    request="36597",
+                    road_segment_id="33662",
+                )
+            )
+        code, text, repo = _run_script(
+            monkeypatch,
+            capsys,
+            tmp_path,
+            script,
+            _traffic_frame(rows),
+            [_period("2023", [2023])],
+        )
+        assert code == 0, text
+        assert "loc-three" not in text
+        _assert_period_lines(text, [("2023", 1, 1)])
+        locations, segments = _assert_success_files(repo)
+        location = _one(locations, "monitoring_location_id", "loc-three")
+        assert _flag(location["eligible"]) is True
+        _close(location["mean_hourly"], 22)
+        assert _count(location["n_complete_hours"]) == 2
+        assert _count(location["n_days"]) == 2
+        segment = _one(segments, "road_segment_id", "33662")
+        _close(segment["mean_hourly"], 22)
+        assert _flag(segment["eligible"]) is True
+        uhf = _read_uhf(repo)
+        valid = _valid_rows(uhf, "2023")
+        assert len(valid) == 1
+        assert _id_text(valid[0]["uhf42_id"]) == "306"
+        _close(valid[0]["traffic_mean_vehicles_per_hour"], 22)
 
 
 def test_script_empty_direction_exits_2(monkeypatch, capsys, tmp_path):

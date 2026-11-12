@@ -202,9 +202,6 @@ def _observed_directions(records):
         if direction == "":
             raise AggregateError(location, 2)
         observed[location].add(direction)
-    for location, labels in observed.items():
-        if len(labels) > 2:
-            raise AggregateError(location, 2)
     return observed
 
 
