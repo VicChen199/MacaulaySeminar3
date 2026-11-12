@@ -28,3 +28,9 @@ attempts: 4
 repairs: 3
 result: passed
 commit: e86193a847ff983b88822619f593719213d1d3a2
+
+## assign-uhf
+attempts: 2
+repairs: 1
+result: passed
+commit: 3aa498c88e01c62d02279e5e48e070e47abe6704
