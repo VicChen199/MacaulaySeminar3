@@ -59,8 +59,10 @@ def _read_export(config):
     path = files[0]
     try:
         if path.suffix.lower() == ".csv":
-            return pd.read_csv(path, dtype=str)
-        return pd.read_excel(path, dtype=str, engine="openpyxl")
+            return pd.read_csv(path, dtype=str, keep_default_na=False)
+        return pd.read_excel(
+            path, dtype=str, keep_default_na=False, engine="openpyxl"
+        )
     except Exception:
         print(path.as_posix())
         return None
