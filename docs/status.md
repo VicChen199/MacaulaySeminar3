@@ -50,3 +50,8 @@ commit: fbc80b00957a1ec6acf8cf860c732806715734d0
 attempts: 1
 result: passed
 commit: e92ae94b0c55ee588e994327336cedfd1c80f1a7
+
+## test-hypotheses
+attempts: 1
+result: passed
+commit: ac75b8de56e0f2a42446da415e42d71ca91158c3
