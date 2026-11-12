@@ -60,6 +60,7 @@ SELECTION_KEYS = (
 )
 PERIOD_KEYS = ("period", "source", "years", "included", "reason")
 QUARTERS = (0, 15, 30, 45)
+NON_QUARTER_MINUTES = (10, 20, 40, 50)
 ORIGIN_X = -74.20
 ORIGIN_Y = 40.50
 CELL_W = 0.08
@@ -1841,3 +1842,318 @@ def test_two_directions_keep_an_hour_only_when_both_are_present(monkeypatch, cap
             extra_direction=True,
         )
         _expect_scenario_d(monkeypatch, capsys, tmp_path, rows)
+
+
+def _non_quarter_volume(uhf):
+    """Even neighborhoods gain volume that must not enter the hour sum."""
+    if int(uhf) % 2 == 0:
+        return 1000.0
+    return 0.0
+
+
+def _mix_non_quarter_minutes(rows):
+    """Keep every quarter row and add minutes 10, 20, 40, and 50 on that hour."""
+    mixed = []
+    next_id = 1
+    for row in rows:
+        quarter = dict(row)
+        quarter[":id"] = next_id
+        mixed.append(quarter)
+        next_id += 1
+        if quarter["mm"] != 0:
+            continue
+        uhf = int(str(quarter["segmentid"]).split("-")[1])
+        volume = _non_quarter_volume(uhf)
+        for minute in NON_QUARTER_MINUTES:
+            extra = dict(quarter)
+            extra[":id"] = next_id
+            extra["mm"] = minute
+            extra["vol"] = volume
+            mixed.append(extra)
+            next_id += 1
+    return mixed
+
+
+def _write_period_file(path, periods):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(
+            (
+                "period",
+                "period_kind",
+                "constituent_years",
+                "n_rows",
+                "asthma_ed_rate_per_10000",
+            )
+        )
+        for period, years, n_rows in periods:
+            writer.writerow(
+                (
+                    period,
+                    "year",
+                    ",".join(str(year) for year in years),
+                    n_rows,
+                    "999",
+                )
+            )
+
+
+def _quarter_preserving_case(tmp_path):
+    """Automated 2022 mixes quarter-hours with minutes 10, 20, 40, and 50.
+
+    2015 has no automated rows, so the selection publishes the 2022 traffic
+    correlation. That correlation is 1 when the hour sum is the four quarter
+    volumes, and it falls below the mix threshold when those other minutes
+    are added in.
+    """
+    sizes = _sizes()
+    automated = _mix_non_quarter_minutes(_full_automated(2022))
+    per_hour = sizes["uhf"] * sizes["segments"] * sizes["dates"] * sizes["hours"]
+    assert sum(row["mm"] in QUARTERS for row in automated) == per_hour * len(QUARTERS)
+    assert sum(row["mm"] in NON_QUARTER_MINUTES for row in automated) == (
+        per_hour * len(NON_QUARTER_MINUTES)
+    )
+    assert all(type(row["mm"]) is int for row in automated)
+    for minute in NON_QUARTER_MINUTES:
+        volumes = [float(row["vol"]) for row in automated if row["mm"] == minute]
+        assert volumes
+        assert max(volumes) > 0
+    historical_2022 = _full_historical(2022)
+    historical_2015 = _full_historical(2015)
+    catalog = (
+        _Catalog()
+        .add("automated", 2022, automated)
+        .add("automated", 2015, [])
+        .add("historical", 2022, historical_2022)
+        .add("historical", 2015, historical_2015)
+    )
+    periods_path = tmp_path / "quarter_preserving_periods.csv"
+    _write_period_file(
+        periods_path,
+        (("2022", (2022,), 7), ("2015", (2015,), 4)),
+    )
+    uhfs = list(range(1, sizes["uhf"] + 1))
+    quarter_means = [float(uhf) for uhf in uhfs]
+    inflated = [
+        float(uhf) + len(NON_QUARTER_MINUTES) * _non_quarter_volume(uhf)
+        for uhf in uhfs
+    ]
+    return {
+        "catalog": catalog,
+        "periods_path": periods_path,
+        "snapshot": _load_snapshot(),
+        "automated": automated,
+        "historical_2015": historical_2015,
+        "quarter_r": _pearson(quarter_means, quarter_means),
+        "inflated_r": _pearson(inflated, quarter_means),
+        "sizes": sizes,
+    }
+
+
+def _run_quarter_preserving(monkeypatch, capsys, tmp_path):
+    case = _quarter_preserving_case(tmp_path)
+    code, text, repo, calls = _run_script(
+        monkeypatch,
+        capsys,
+        tmp_path / "selection",
+        case["periods_path"],
+        case["snapshot"],
+        case["catalog"],
+    )
+    return case, code, text, repo, calls
+
+
+def _assert_quarter_preserving_selection(case, repo):
+    sizes = case["sizes"]
+    _assert_selection(
+        repo / "outputs" / "audit" / "source_selection.json",
+        "2",
+        (True, case["quarter_r"], sizes["uhf"]),
+        {
+            "2022": {
+                "source": "automated",
+                "years": [2022],
+                "included": True,
+                "reason": "",
+            },
+            "2015": {
+                "source": "historical",
+                "years": [2015],
+                "included": True,
+                "reason": "",
+            },
+        },
+    )
+    _assert_comparison(
+        repo / "outputs" / "dataset_source_comparison.csv",
+        {
+            "2022": {
+                "automated_available": True,
+                "historical_available": True,
+                "aadt_available": False,
+                "recommended_source": "automated",
+                "raw_record_count": len(case["automated"]),
+                "distinct_segments": sizes["uhf"] * sizes["segments"],
+                "n_uhf_with_traffic": sizes["uhf"],
+                "n_rows": 7,
+            },
+            "2015": {
+                "automated_available": False,
+                "historical_available": True,
+                "aadt_available": False,
+                "recommended_source": "historical",
+                "raw_record_count": len(case["historical_2015"]),
+                "distinct_segments": sizes["uhf"] * sizes["segments"],
+                "n_uhf_with_traffic": sizes["uhf"],
+                "n_rows": 4,
+            },
+        },
+    )
+    _assert_coverage(
+        repo / "outputs" / "audit" / "coverage_for_selection.csv",
+        "2022",
+        "automated",
+        _adequate_ids(),
+    )
+    exclusion_files = [
+        path.relative_to(repo).as_posix()
+        for path in repo.rglob("*")
+        if path.is_file() and "exclusion" in path.name.casefold()
+    ]
+    assert exclusion_files == []
+
+
+def _historical_snapshot_with_minute():
+    snapshot = _load_snapshot()
+    historical_columns = list(snapshot["historical"])
+    hour_at = historical_columns.index("hour")
+    historical_columns.insert(hour_at + 1, "minute")
+    snapshot["historical"] = historical_columns
+    return snapshot
+
+
+def _historical_non_quarter_rows(year):
+    rows = _historical_rows(year, [(1, 6, [0])], _identity, minute=10)
+    for index, row in enumerate(rows):
+        row["minute"] = NON_QUARTER_MINUTES[index % len(NON_QUARTER_MINUTES)]
+    return rows
+
+
+def _unparseable_automated_rows(year):
+    rows = _automated_rows(year, [(1, 6, [0])], _identity, quarters=QUARTERS)
+    for row in rows:
+        row["mm"] = str(int(row["mm"]))
+    rows[0]["mm"] = "not-a-minute"
+    return rows
+
+
+def test_non_quarter_minutes_add_nothing_to_the_quarter_hour_sum(
+    monkeypatch, capsys, tmp_path
+):
+    with _guard_repo():
+        _contract()
+        case, code, text, repo, _calls = _run_quarter_preserving(
+            monkeypatch, capsys, tmp_path
+        )
+        threshold = float(_config()["sources"]["mix_min_traffic_r"])
+        assert case["quarter_r"] >= threshold
+        assert case["inflated_r"] < threshold
+        assert code == 0, text
+        assert HOUR_REASON not in text
+        selection = json.loads(
+            (repo / "outputs" / "audit" / "source_selection.json").read_text()
+        )
+        assert selection["comparability_pass"] is True
+        assert selection["comparability_r"] == pytest.approx(case["quarter_r"], abs=1e-6)
+        assert selection["comparability_r"] != pytest.approx(case["inflated_r"], abs=1e-2)
+        _assert_coverage(
+            repo / "outputs" / "audit" / "coverage_for_selection.csv",
+            "2022",
+            "automated",
+            _adequate_ids(),
+        )
+
+
+def test_automated_2022_mixed_minutes_keep_selection_columns(
+    monkeypatch, capsys, tmp_path
+):
+    with _guard_repo():
+        _contract()
+        case, code, text, repo, calls = _run_quarter_preserving(
+            monkeypatch, capsys, tmp_path
+        )
+        assert code == 0, text
+        assert HOUR_REASON not in text
+        _assert_quarter_preserving_selection(case, repo)
+        _assert_paging(
+            calls,
+            case["snapshot"],
+            case["catalog"],
+            int(_config()["api"]["page_size"]),
+        )
+
+
+def test_automated_non_quarter_route_exits_0_and_unparsed_minute_exits_2(
+    monkeypatch, capsys, tmp_path
+):
+    with _guard_repo():
+        _contract()
+        unparsed_periods = tmp_path / "unparsed_periods.csv"
+        _write_period_file(unparsed_periods, (("2022", (2022,), 7),))
+        unparsed = _Catalog().add("automated", 2022, _unparseable_automated_rows(2022))
+        unparsed_code, unparsed_text, _unparsed_repo, _unparsed_calls = _run_script(
+            monkeypatch,
+            capsys,
+            tmp_path / "unparsed",
+            unparsed_periods,
+            _load_snapshot(),
+            unparsed,
+        )
+        assert unparsed_code == 2
+        assert HOUR_REASON in unparsed_text
+        assert "automated" in unparsed_text
+        assert "2022" in unparsed_text
+
+        _case, code, text, repo, _calls = _run_quarter_preserving(
+            monkeypatch, capsys, tmp_path
+        )
+        assert (repo / "scripts" / "02_select_sources.py").is_file()
+        assert code == 0, text
+        assert HOUR_REASON not in text
+        _assert_terminal(text, "2", {"2022": "automated", "2015": "historical"}, [])
+
+
+def test_mixed_automated_minutes_do_not_print_hourly_definition_unresolved(
+    monkeypatch, capsys, tmp_path
+):
+    with _guard_repo():
+        _contract()
+        historical_periods = tmp_path / "historical_non_quarter_periods.csv"
+        _write_period_file(historical_periods, (("2022", (2022,), 7),))
+        historical_rows = _historical_non_quarter_rows(2022)
+        assert set(NON_QUARTER_MINUTES) <= {row["minute"] for row in historical_rows}
+        historical = (
+            _Catalog()
+            .add("automated", 2022, [])
+            .add("historical", 2022, historical_rows)
+        )
+        historical_code, historical_text, _historical_repo, _historical_calls = _run_script(
+            monkeypatch,
+            capsys,
+            tmp_path / "historical",
+            historical_periods,
+            _historical_snapshot_with_minute(),
+            historical,
+        )
+        assert historical_code == 2
+        assert HOUR_REASON in historical_text
+        assert "historical" in historical_text
+        assert "2022" in historical_text
+
+        _case, code, text, _repo, _calls = _run_quarter_preserving(
+            monkeypatch, capsys, tmp_path
+        )
+        assert code == 0, text
+        assert HOUR_REASON not in text
+        _assert_terminal(text, "2", {"2022": "automated", "2015": "historical"}, [])
