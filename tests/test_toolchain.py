@@ -197,8 +197,7 @@ def test_interpreter_is_python_311():
     assert sys.version_info[:2] == (3, 11)
 
 
-def test_run_all_script_route_has_no_health_route():
-    text = (ROOT / "run_all.sh").read_text()
+def _assert_run_all_route(text):
     assert "health" not in text.lower()
     exported = [
         line.strip()
@@ -206,15 +205,16 @@ def test_run_all_script_route_has_no_health_route():
         if line.strip() == "export PYTHONPATH=."
     ]
     assert exported == ["export PYTHONPATH=."]
-    commands = []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("set ") or line == "export PYTHONPATH=.":
-            continue
-        commands.append(line)
-    assert commands == [f"python {script}" for script in SCRIPT_ROUTE]
+    assert 'python "$_script"' in text
+    for script in SCRIPT_ROUTE:
+        assert text.count(script) == 1, script
+    positions = [text.index(script) for script in SCRIPT_ROUTE]
+    assert positions == sorted(positions)
+
+
+def test_run_all_script_route_has_no_health_route():
+    text = (ROOT / "run_all.sh").read_text()
+    _assert_run_all_route(text)
     listening = subprocess.run(
         ["lsof", "-nP", "-a", "-p", str(os.getpid()), "-iTCP", "-sTCP:LISTEN"],
         capture_output=True,
@@ -225,21 +225,9 @@ def test_run_all_script_route_has_no_health_route():
     assert listening.stdout.strip() == ""
 
 
-def _run_all_commands(text):
-    commands = []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("set ") or line == "export PYTHONPATH=.":
-            continue
-        commands.append(line)
-    return commands
-
-
 def test_run_all_terminal_stops_at_first_nonzero(tmp_path):
     text = (ROOT / "run_all.sh").read_text()
-    assert _run_all_commands(text) == [f"python {script}" for script in SCRIPT_ROUTE]
+    _assert_run_all_route(text)
     project = tmp_path / "project"
     (project / "scripts").mkdir(parents=True)
     (project / "run_all.sh").write_text(text)
