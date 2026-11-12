@@ -1067,6 +1067,65 @@ def test_portal_export_columns_are_renamed(monkeypatch, capsys, tmp_path):
         )
 
 
+def test_thousands_comma_in_asthma_count_is_a_number(monkeypatch, capsys, tmp_path):
+    with _guard_repo():
+        clean_asthma, _clean_traffic, _script = _require(
+            "A count written as 1,036 is parsed as 1036."
+        )
+        monkeypatch.chdir(tmp_path)
+        calls = _forbid_network(monkeypatch)
+        frame = pd.DataFrame(
+            [
+                {
+                    "TimePeriod": "2018",
+                    "GeoID": "106",
+                    "Geography": "High Bridge\u2013Morrisania",
+                    "Borough": "Bronx",
+                    "Number": "1,036",
+                    "Estimated annual rate per 10,000": "250.1",
+                },
+                {
+                    "TimePeriod": "2015-2017",
+                    "GeoID": "203",
+                    "Geography": "Bedford",
+                    "Borough": "Brooklyn",
+                    "Number": "2,468",
+                    "Estimated annual rate per 10,000": "1,234.5",
+                },
+            ]
+        )
+        code, text, value, _unused = _quiet_call(capsys, clean_asthma, frame)
+        assert code == 0, text
+        got = _asthma_map(value)
+        _assert_asthma(
+            got[("106", "2018")],
+            name="High Bridge\u2013Morrisania",
+            borough="Bronx",
+            kind="year",
+            years="2018",
+            count=1036,
+            rate=250.1,
+        )
+        _assert_asthma(
+            got[("203", "2015-2017")],
+            name="Bedford",
+            borough="Brooklyn",
+            kind="pooled",
+            years="2015,2016,2017",
+            count=2468,
+            rate=1234.5,
+        )
+        broken = frame.iloc[[0]].copy()
+        broken["Number"] = "1,03"
+        code, text, _value, _unused = _quiet_call(capsys, clean_asthma, broken)
+        text = _assert_exit(code, text)
+        assert "1,03" in text
+        assert calls == [], "fixture test must not call Socrata"
+        assert not (tmp_path / "outputs").exists(), (
+            "clean_asthma on a fixture must not write outputs/"
+        )
+
+
 def test_unknown_borough_exits_2(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         clean_asthma, _clean_traffic, script = _require(
