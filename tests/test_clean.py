@@ -983,7 +983,11 @@ def test_unparseable_asthma_value_exits_2(monkeypatch, capsys, tmp_path):
         monkeypatch.chdir(tmp_path)
         _forbid_network(monkeypatch)
         for folder in ("unparseable_rate", "unparseable_count"):
-            frame = _table(FIXTURES / folder / "export.csv")
+            frame = pd.read_csv(
+                FIXTURES / folder / "export.csv",
+                dtype=str,
+                keep_default_na=False,
+            )
             code, text, _value, _unused = _quiet_call(capsys, clean_asthma, frame)
             text = _assert_exit(code, text)
             assert _token(text, "NA"), text
