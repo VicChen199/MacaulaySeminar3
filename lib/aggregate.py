@@ -479,7 +479,7 @@ def _segment_row(segment_id, uhf, year, items, own_segment):
         "year": year,
         "mean_hourly": _mean(means),
         "hour_balanced_mean": _mean(balanced),
-        "n_locations": len(items),
+        "n_locations": len(voters),
         "n_complete_hours": int(sum(_int_or_none(item.get("n_complete_hours")) or 0 for item in items)),
         "n_days": _distinct_days(items),
         "n_sessions": int(sum(_int_or_none(item.get("n_sessions")) or 0 for item in items)),
