@@ -1,6 +1,12 @@
 # Figure guide
 
-Each chart is saved twice, as `.png` and `.pdf`, with the same content. The text printed on the figure is a column name or a string of `n`, `r`, and `p`. This file is the readable title and the sample behind each one.
+Each chart is saved twice, as `.png` and `.pdf`, with the same content. On the sample and result charts, the text printed on the figure is a column name or a string of `n`, `r`, and `p`. On the neighborhood path charts, the printed title is the neighborhood id and name, then `n`, `r`, `p`, a reading, and the sign of `r`. This file is the readable title and the sample behind each one.
+
+The charts sit in three folders:
+
+- **Sample figures,** S1–S7, in `outputs/figures/sample/`. They describe the merged file. They do not show a test.
+- **Result figures,** R1–R4, in `outputs/figures/results/`. They are the hypothesis tests.
+- **Neighborhood paths,** N107, N106, and N105, in `outputs/figures/neighborhood/`. Each one follows a single neighborhood across the years where it is valid, and the title gives that path's Pearson correlation.
 
 The study asks how neighborhood traffic lines up with asthma emergency-department visits for children ages 4 and under in New York City. The unit is one United Hospital Fund neighborhood (UHF42). There are 42 of those neighborhoods. A point or a boxplot observation is a neighborhood, not a person, a street, or a hospital visit.
 
@@ -154,3 +160,63 @@ The printed title is one line that concatenates `n`, `r`, and `p` for every year
 Two points for the **same 32 eligible neighborhoods in 2023**. Blue is the Pearson correlation of the raw values. Orange is the Spearman correlation of the ranks. There is no other year on this chart.
 
 The printed title is `Pearson r=-0.08080239123990451; Spearman rho=0.08926771185874081`. Pearson *r* is about **−0.081** (p about 0.660). Spearman *rho* is about **+0.089** (p about 0.627). The signs disagree, and both coefficients are close to zero. The rank correlation does not support a positive association any more than the Pearson test does.
+
+---
+
+## Neighborhood paths
+
+These are pictures of three neighborhoods over the included years. Files are in `outputs/figures/neighborhood/`. `scripts/11_neighborhood_path.py` reads `final_merged_dataset.csv` and writes them. It does not change S1–S7 or R1–R4.
+
+Each title adds a Pearson correlation of that neighborhood's own valid years: `traffic_mean_vehicles_per_hour` with `asthma_ed_rate_per_10000`, two-sided, alpha 0.05. `n` here is the number of valid years, not the number of neighborhoods. `reading` is `positive` or `negative` when the p-value is below 0.05, and `null` when it is not. `sign` is the direction of `r` itself: `positive`, `negative`, or `zero`. A path with fewer than three valid years, with no variation in either measure, or with a perfect correlation, prints `correlation skipped` and does not print an `r` or a `p`.
+
+The three neighborhoods are pinned. Among neighborhoods that are `valid` in all seven included years, they have the highest mean `asthma_ed_rate_per_10000`: Hunts Point - Mott Haven about **617.8**, High Bridge - Morrisania **603.3**, and Crotona - Tremont about **525.0**. A later run does not swap in a different neighborhood.
+
+Each file is two panels that share the year axis. The top panel is `traffic_mean_vehicles_per_hour`. The bottom panel is `asthma_ed_rate_per_10000`. A point is one valid year. 2020 and 2021 are excluded from the study and are not on the axis. These three neighborhoods are valid in every included year, so each panel has seven points: 2015, 2016, 2017, 2018, 2019, 2022, 2023. The traffic mean is whichever eligible segments were counted that year, so a jump can be a change in the counted roads as well as a change in volume.
+
+### N107 — Hunts Point - Mott Haven
+
+`N107_hunts_point_mott_haven.png` and `.pdf`
+
+The printed title is `107 Hunts Point - Mott Haven; n=7; r=0.2521154144149449; p=0.5854673366282412; reading=null; sign=positive`. Pearson *r* is about **0.252**. The two-sided p-value is about **0.585**. The reading is **null**: the estimate is positive, and the test does not reject a correlation of 0. The 95% interval, which is not drawn, runs from about −0.618 to 0.845 and includes 0. The asthma rate falls from 876.5 per 10,000 in 2015 to 347.2 in 2023. Traffic is 837.3 vehicles per hour in 2015, 9.9 in 2019 (one eligible segment), and 771.8 in 2023 (two segments).
+
+| Year | Traffic mean | Asthma rate | Eligible segments |
+| --- | ---: | ---: | ---: |
+| 2015 | 837.3 | 876.5 | 6 |
+| 2016 | 318.3 | 862 | 12 |
+| 2017 | 403.5 | 681.1 | 5 |
+| 2018 | 279.4 | 613.6 | 6 |
+| 2019 | 9.9 | 529.2 | 1 |
+| 2022 | 41.6 | 415.2 | 2 |
+| 2023 | 771.8 | 347.2 | 2 |
+
+### N106 — High Bridge - Morrisania
+
+`N106_high_bridge_morrisania.png` and `.pdf`
+
+The printed title is `106 High Bridge - Morrisania; n=7; r=-0.3070299258623036; p=0.5029859132372803; reading=null; sign=negative`. Pearson *r* is about **−0.307**. The two-sided p-value is about **0.503**. The reading is **null**: the estimate is negative, and the test does not reject a correlation of 0. The 95% interval runs from about −0.861 to 0.580 and includes 0. The asthma rate falls from 846.6 per 10,000 in 2015 to 383.2 in 2023. Traffic peaks at 1,269.8 vehicles per hour in 2018, the year with one eligible segment, and is 908.8 in 2023.
+
+| Year | Traffic mean | Asthma rate | Eligible segments |
+| --- | ---: | ---: | ---: |
+| 2015 | 237.8 | 846.6 | 10 |
+| 2016 | 320.9 | 790.6 | 8 |
+| 2017 | 475.0 | 608 | 5 |
+| 2018 | 1,269.8 | 603.3 | 1 |
+| 2019 | 220.0 | 492 | 1 |
+| 2022 | 211.6 | 499.4 | 1 |
+| 2023 | 908.8 | 383.2 | 2 |
+
+### N105 — Crotona - Tremont
+
+`N105_crotona_tremont.png` and `.pdf`
+
+The printed title is `105 Crotona - Tremont; n=7; r=-0.5018641600309038; p=0.25111829952661907; reading=null; sign=negative`. Pearson *r* is about **−0.502**. The two-sided p-value is about **0.251**. The reading is **null**: the estimate is negative, and the test does not reject a correlation of 0. The 95% interval runs from about −0.911 to 0.404 and includes 0. The asthma rate falls from 737.6 per 10,000 in 2015 to 389.7 in 2023. Traffic is 945.9 vehicles per hour in 2019 (one eligible segment) and 540.8 in 2023 (18 segments).
+
+| Year | Traffic mean | Asthma rate | Eligible segments |
+| --- | ---: | ---: | ---: |
+| 2015 | 380.6 | 737.6 | 4 |
+| 2016 | 123.9 | 695 | 1 |
+| 2017 | 259.4 | 499.7 | 4 |
+| 2018 | 301.8 | 477 | 1 |
+| 2019 | 945.9 | 433.8 | 1 |
+| 2022 | 362.7 | 442.3 | 2 |
+| 2023 | 540.8 | 389.7 | 18 |

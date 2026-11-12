@@ -1,5 +1,6 @@
 """Write sample figures S1 through S7."""
 
+import math
 from pathlib import Path
 
 import geopandas as gpd
@@ -13,6 +14,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from lib.describe import _included_labels, _label, _period_rows, _valid_mask, distribution_subtitle
 
@@ -583,6 +585,145 @@ def _cell(value):
     except (TypeError, ValueError):
         pass
     return str(value).strip()
+
+
+# Pinned from the neighborhoods that are valid in every included year and have
+# the highest mean asthma_ed_rate_per_10000. The chart does not re-rank.
+NEIGHBORHOOD_PATHS = (
+    ("107", "Hunts Point - Mott Haven", "N107_hunts_point_mott_haven"),
+    ("106", "High Bridge - Morrisania", "N106_high_bridge_morrisania"),
+    ("105", "Crotona - Tremont", "N105_crotona_tremont"),
+)
+
+
+def neighborhood_path_figures(merged, output_dir, neighborhoods=NEIGHBORHOOD_PATHS):
+    """Write one two-panel path per pinned neighborhood, with that path's Pearson reading."""
+
+    output = Path(output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    frame = merged.copy() if isinstance(merged, pd.DataFrame) else pd.DataFrame(merged)
+    paths = []
+    for uhf_id, fallback_name, stem in neighborhoods:
+        series = _neighborhood_series(frame, uhf_id)
+        paths.extend(_draw_neighborhood_path(series, uhf_id, fallback_name, output / stem))
+    return paths
+
+
+def _neighborhood_series(frame, uhf_id):
+    if frame is None or frame.empty or "uhf42_id" not in frame.columns:
+        return []
+    if "coverage_status" not in frame.columns:
+        return []
+    matched = frame[frame["uhf42_id"].map(_cell) == _cell(uhf_id)]
+    points = []
+    for record in matched.to_dict(orient="records"):
+        if _cell(record.get("coverage_status")).lower() != "valid":
+            continue
+        traffic = _number(record.get("traffic_mean_vehicles_per_hour"))
+        rate = _number(record.get("asthma_ed_rate_per_10000"))
+        period = _cell(record.get("period"))
+        if traffic is None or rate is None or not period:
+            continue
+        points.append(
+            {
+                "period": period,
+                "traffic": traffic,
+                "rate": rate,
+                "name": _cell(record.get("uhf42_name")),
+            }
+        )
+    points.sort(key=lambda item: (_recency(item["period"]), item["period"]))
+    unique = []
+    seen = set()
+    for item in points:
+        if item["period"] in seen:
+            continue
+        seen.add(item["period"])
+        unique.append(item)
+    return unique
+
+
+def _draw_neighborhood_path(series, uhf_id, fallback_name, stem):
+    figure, axes = plt.subplots(2, 1, sharex=True, figsize=(8, 6.5), layout="constrained")
+    if not series:
+        for axis in axes:
+            _annotate_empty(axis)
+        title = EMPTY_NOTE
+    else:
+        name = series[0]["name"] or fallback_name
+        positions = list(range(len(series)))
+        years = [item["period"] for item in series]
+        axes[0].plot(
+            positions,
+            [item["traffic"] for item in series],
+            marker="o",
+            color="#4c78a8",
+        )
+        axes[1].plot(
+            positions,
+            [item["rate"] for item in series],
+            marker="o",
+            color="#f58518",
+        )
+        axes[1].set_xticks(positions)
+        axes[1].set_xticklabels(years)
+        title = _path_title(uhf_id, name, series)
+    axes[0].set_ylabel("traffic_mean_vehicles_per_hour")
+    axes[1].set_ylabel("asthma_ed_rate_per_10000")
+    axes[1].set_xlabel("period")
+    figure.suptitle(title, fontsize=9)
+    return _save(figure, stem, title)
+
+
+def _path_title(uhf_id, name, series):
+    """Pearson r for one neighborhood's valid years. Alpha is 0.05, two-sided."""
+
+    base = f"{_cell(uhf_id)} {name}"
+    fitted = _path_correlation(series)
+    if fitted is None:
+        return f"{base}; n={len(series)}; correlation skipped"
+    count, correlation, p_value = fitted
+    return (
+        f"{base}; n={count}; r={correlation}; p={p_value}; "
+        f"reading={_path_reading(correlation, p_value)}; sign={_path_sign(correlation)}"
+    )
+
+
+def _path_correlation(series):
+    count = len(series)
+    if count < 3:
+        return None
+    traffic = [item["traffic"] for item in series]
+    rate = [item["rate"] for item in series]
+    if _flat(traffic) or _flat(rate):
+        return None
+    result = stats.pearsonr(traffic, rate, alternative="two-sided")
+    correlation = float(result.statistic)
+    p_value = float(result.pvalue)
+    if not math.isfinite(correlation) or not math.isfinite(p_value):
+        return None
+    if math.isclose(abs(correlation), 1.0, rel_tol=0.0, abs_tol=1e-8):
+        return None
+    return count, correlation, p_value
+
+
+def _path_reading(correlation, p_value, alpha=0.05):
+    if p_value >= alpha:
+        return "null"
+    return _path_sign(correlation)
+
+
+def _path_sign(correlation):
+    if correlation > 0:
+        return "positive"
+    if correlation < 0:
+        return "negative"
+    return "zero"
+
+
+def _flat(values):
+    array = np.asarray(values, dtype=float)
+    return array.size < 2 or float(np.std(array)) == 0.0
 
 
 globals()["result" + "_figures"] = write_result_charts

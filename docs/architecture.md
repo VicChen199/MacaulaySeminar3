@@ -46,7 +46,7 @@ pytest
 python scripts/01_audit_sources.py
 ```
 
-`./run_all.sh` is a caller, not an operation. It exports `PYTHONPATH=.`, runs `scripts/01` through `scripts/10` in order, and stops at the first non-zero exit.
+`./run_all.sh` is a caller, not an operation. It exports `PYTHONPATH=.`, runs `scripts/01` through `scripts/11` in order, and stops at the first non-zero exit.
 
 ## Runtime
 
@@ -64,9 +64,9 @@ Layout the scripts call:
 - `lib/merge.py` — `merge_uhf_period`
 - `lib/describe.py` — `descriptive_tables`
 - `lib/stats.py` — `pearson_by_period`, `spearman_by_period`, `sensitivity`, `compare_periods`
-- `lib/plots.py` — `sample_figures`, `result_figures`
+- `lib/plots.py` — `sample_figures`, `result_figures`, `neighborhood_path_figures`
 - `lib/report.py` — `workbook`, `narratives`, `compile_exclusions`
-- `scripts/01_audit_sources.py` through `scripts/10_report.py`
+- `scripts/01_audit_sources.py` through `scripts/11_neighborhood_path.py`
 - `run_all.sh`, `tests/`, `tests/fixtures/`
 
 The system map is the flowchart in the next section that has a route trace. It is drawn from the traces below.
@@ -337,6 +337,27 @@ sequenceDiagram
   Outputs-->>Terminal: workbook, figures R1 to R4, reports, exit_code
 ```
 
+### neighborhood-path
+
+caller: Terminal, the command that draws the three neighborhood paths.
+request: `python scripts/11_neighborhood_path.py`. Arguments: none. Reads `outputs/data/final_merged_dataset.csv`.
+handler: `neighborhood_path_figures` writes one PNG and one PDF for each pinned neighborhood: 107 Hunts Point - Mott Haven, 106 High Bridge - Morrisania, and 105 Crotona - Tremont. Each figure plots `traffic_mean_vehicles_per_hour` and `asthma_ed_rate_per_10000` on the years where `coverage_status` is `valid` and both values are present. A year that is not valid is omitted. The title prints a two-sided Pearson correlation of those years at alpha 0.05: `n`, `r`, `p`, `reading` (`positive`, `negative`, or `null`), and `sign`. Fewer than three valid years, zero variance, or a perfect correlation prints `correlation skipped` and no p-value. S1–S7 and R1–R4 are not rewritten, and no Pearson CSV row is added. The three ids stay pinned; the script does not choose a different neighborhood when the rates change.
+stages: Terminal, Python, Outputs, Terminal.
+response: `status` str, `exit_code` int, `message` str, and the PNG and PDF files under `outputs/figures/neighborhood/`.
+screen: On success the terminal prints each figure path. A missing merged file exits 2 and prints that path. A pinned neighborhood with no valid year is still written, annotated that no eligible neighborhood is available, and the script exits 0.
+diagram:
+
+```mermaid
+sequenceDiagram
+  participant Terminal
+  participant Python
+  participant Outputs
+  Terminal->>Python: python scripts/11_neighborhood_path.py
+  Python->>Outputs: read final_merged_dataset
+  Outputs->>Outputs: neighborhood_path_figures
+  Outputs-->>Terminal: three neighborhood path figures, exit_code
+```
+
 ### run-tests
 
 caller: Terminal, the pytest command.
@@ -385,6 +406,7 @@ flowchart LR
   Terminal -->|"describe-sample"| Python
   Terminal -->|"test-hypotheses"| Python
   Terminal -->|"write-report"| Python
+  Terminal -->|"neighborhood-path"| Python
   Terminal -->|"run-tests"| Python
 
   Python -->|"audit-sources"| Config
@@ -397,6 +419,7 @@ flowchart LR
   Python -->|"describe-sample"| Config
   Python -->|"test-hypotheses"| Config
   Python -->|"write-report"| Config
+  Python -->|"neighborhood-path"| Outputs
   Python -->|"run-tests"| Fixtures
 
   Config -->|"audit-sources"| AsthmaExport
@@ -440,6 +463,7 @@ flowchart LR
   Outputs -->|"describe-sample"| Terminal
   Outputs -->|"test-hypotheses"| Terminal
   Outputs -->|"write-report"| Terminal
+  Outputs -->|"neighborhood-path"| Terminal
   Fixtures -->|"run-tests"| Terminal
 ```
 
@@ -555,16 +579,27 @@ This journey uses `test-hypotheses`.
 
 This journey uses `write-report`.
 
+### Draw three neighborhood paths
+
+1. Screen: Terminal. The person runs the path script after the merged file exists.
+2. Request: `python scripts/11_neighborhood_path.py`. Trace `neighborhood-path`.
+3. Handler: `neighborhood_path_figures`. One chart per pinned neighborhood. Each chart is the traffic mean and the asthma rate on that neighborhood's valid years, and the title states that path's Pearson reading.
+4. Tables: reads `final_merged`; writes the six neighborhood path files. Invariant: the year-by-year sample figures and result figures are left unchanged, a year with `coverage_status` other than `valid` is not a point, and a skipped correlation does not print a p-value.
+5. Response: status, exit code, and the figure paths.
+6. Screen: the terminal prints those paths. A missing merged file exits 2. A pinned neighborhood with no valid year is annotated and the script exits 0.
+
+This journey uses `neighborhood-path`.
+
 ### Reproduce the study
 
 1. Screen: Terminal. The person creates the virtualenv, installs `requirements.txt`, places the asthma export, and runs `./run_all.sh`.
-2. Request: the shell runs, in order, the commands of `audit-sources`, `select-sources`, `download-traffic`, `clean`, `assign-uhf`, `aggregate-traffic`, `merge-analysis`, `describe-sample`, `test-hypotheses`, and `write-report`. The shell is a caller. It adds no operation.
+2. Request: the shell runs, in order, the commands of `audit-sources`, `select-sources`, `download-traffic`, `clean`, `assign-uhf`, `aggregate-traffic`, `merge-analysis`, `describe-sample`, `test-hypotheses`, `write-report`, and `neighborhood-path`. The shell is a caller. It adds no operation.
 3. Handler: each script's handler runs as in its own journey. A non-zero exit stops the shell.
-4. Tables: the tables named in those ten traces, in that order. Invariant: a later script reads an earlier script's outputs and does not recompute a source decision.
+4. Tables: the tables named in those eleven traces, in that order. Invariant: a later script reads an earlier script's outputs and does not recompute a source decision.
 5. Response: the last script's status, or the status of the script that stopped the shell.
 6. Screen: the terminal shows each script's summary in order. A data-quality stop leaves the files of the failed script and does not run later scripts. The person reads `outputs/results_summary.md` when `write-report` exits 0.
 
-This journey uses those ten traces.
+This journey uses those eleven traces.
 
 ### Check invariants
 
@@ -695,6 +730,8 @@ Sample figures, PNG and PDF, under `outputs/figures/sample/`: `S1_traffic_distri
 
 Result figures, PNG and PDF, under `outputs/figures/results/`: `R1_primary_scatter`, `R2_comparison_scatter` when a second period exists, `R3_correlation_forest`, `R4_pearson_spearman`.
 
+Neighborhood path figures, PNG and PDF, under `outputs/figures/neighborhood/`: `N107_hunts_point_mott_haven`, `N106_high_bridge_morrisania`, `N105_crotona_tremont`. Each file is one neighborhood's valid years. The title carries that path's Pearson `n`, `r`, `p`, `reading`, and `sign`.
+
 `outputs/research_results.xlsx` sheets, in order: Year and Source Coverage, Matched Dataset, Sample Characteristics, Descriptive Statistics, Pearson Correlations, Spearman Sensitivity, Correlation Comparisons, Missing Data and Exclusions, Data Dictionary. The dictionary rows are `file`, `column`, `type`, `meaning`, `units`, taken from the tables above.
 
 ### Primary exposure
@@ -715,13 +752,14 @@ For automated and historical counts, a complete hour is the sum of four distinct
 | describe-sample | python scripts/08_describe.py | no CLI args; final_merged, locations, figure GeoJSON | status str, exit_code int, two descriptive CSVs, figures S1–S7 png and pdf | exit 2 missing merged file; n of 0 writes an annotated figure and exits 0 | Terminal | Terminal, Python, Config, Outputs, GeographyLocal, Outputs, Terminal |
 | test-hypotheses | python scripts/09_test_hypotheses.py | no CLI args; final_merged, traffic_location_year, alpha, sensitivity lists, bootstrap flag | status str, exit_code int, pearson, spearman, sensitivity, and comparison CSVs | exit 2 every period skipped, or formula t far from SciPy t; a single skipped period stays a row with a null p | Terminal | Terminal, Python, Config, Outputs, Terminal |
 | write-report | python scripts/10_report.py | no CLI args; stat tables, exclusion logs, source_selection | status str, exit_code int, research_results.xlsx, R figures, excluded_observations.csv, results_summary.md, interpretation_guide.md | exit 2 when no Pearson test is ok; a missing R2 with one period exits 0 | Terminal | Terminal, Python, Config, Outputs, Terminal |
+| neighborhood-path | python scripts/11_neighborhood_path.py | no CLI args; final_merged | status str, exit_code int, three neighborhood path png and pdf files | exit 2 missing merged file; a pinned neighborhood with no valid year writes an annotated figure and exits 0 | Terminal | Terminal, Python, Outputs, Terminal |
 | run-tests | pytest | no CLI args; tests/fixtures only | status str, exit_code int, pytest summary | non-zero when an invariant assertion fails | Terminal | Terminal, Python, Fixtures, Terminal |
 
 ## Screen catalog
 
 | screen | traces it calls |
 | --- | --- |
-| Terminal | audit-sources, select-sources, download-traffic, clean, assign-uhf, aggregate-traffic, merge-analysis, describe-sample, test-hypotheses, write-report, run-tests |
+| Terminal | audit-sources, select-sources, download-traffic, clean, assign-uhf, aggregate-traffic, merge-analysis, describe-sample, test-hypotheses, write-report, neighborhood-path, run-tests |
 
 The workbook, the PNG and PDF figures, and the two markdown reports are files the person opens after `write-report`. They do not call an operation.
 
@@ -746,5 +784,6 @@ The person sees these on the terminal, and in the written tables when a script g
 - A period whose usable n is below 3, or whose traffic or rate has zero variance: a Pearson row with `test_status=skipped`, no p-value printed.
 - No successful Pearson test: `write-report` states the limitation and exits 2.
 - A descriptive chart with n of 0: the chart file exists and says no eligible neighborhood is available.
+- Merged file missing at the neighborhood-path script: exit 2, the path printed. A pinned neighborhood with no valid year still writes its chart, annotated that no eligible neighborhood is available, and the script exits 0.
 
 ## Open decisions

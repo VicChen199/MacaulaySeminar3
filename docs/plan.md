@@ -12,7 +12,7 @@ Every acceptance id below is one of: `audit-sources`, `select-sources`, `downloa
 
 The test command for every phase is `pytest` from the repository root with `PYTHONPATH=.`. Tests under `run-tests` load `tests/fixtures/` only. They do not read `data/` or `outputs/`, they do not write those trees, and they do not call Socrata. Script behavior is checked by calling the named library functions on fixture tables, or by running the script against a temporary copy of the fixture tree. The terminal is the only screen.
 
-`./run_all.sh` is a caller. It is not an operation. It exports `PYTHONPATH=.`, runs `scripts/01` through `scripts/10` in order, and stops at the first non-zero exit.
+`./run_all.sh` is a caller. It is not an operation. It exports `PYTHONPATH=.`, runs `scripts/01` through `scripts/11` in order, and stops at the first non-zero exit.
 
 ## Phase 0: Walking skeleton
 depends_on: []
@@ -26,7 +26,7 @@ owns:
 - tests/fixtures/toolchain/**
 acceptance:
 - run-tests: From the repository root, with Python 3.11 and `PYTHONPATH=.`, `pytest` exits 0 and the terminal prints a passed count. The run reads `tests/fixtures/toolchain/` only. It does not read `data/` or `outputs/` and it does not call Socrata. The skeleton installs the stack libraries from `requirements.txt` at the pinned minimums (pandas>=2.2, numpy>=1.26, requests>=2.32, geopandas>=1.0, shapely>=2.0, pyproj>=3.6, scipy>=1.12, matplotlib>=3.8, seaborn>=0.13, openpyxl>=3.1, pyarrow>=15, pytest>=8.0). `load_config` reads `config/pipeline.toml` with `tomllib` and returns every key and default in the architecture config table. Automated field aliases are year `yr`, month `m`, day `d`, hour `hh`, minute `mm`, volume `vol`, segment `segmentid`, wkt `wktgeom`, direction `direction`, borough `boro`, request `requestid`. `fields.historical` and `fields.aadt` use the same canonical names; each alias list contains the canonical name and the automated alias for that field, plus canonical `aadt` for the AADT value. Borough aliases map source tokens onto Manhattan, Bronx, Brooklyn, Queens, and Staten Island. `sources.preference` is `automated`, `historical`, `aadt` in that order. The dev command is `pytest` with `PYTHONPATH=.`. The terminal is the only screen. There is no HTTP server and no health route.
-done_when: `pytest` prints a passed count and exits 0. `config/pipeline.toml` is present and `load_config` returns it. `run_all.sh` lists `scripts/01_audit_sources.py` through `scripts/10_report.py` in that order and exits at the first non-zero status. No process listens on a port.
+done_when: `pytest` prints a passed count and exits 0. `config/pipeline.toml` is present and `load_config` returns it. `run_all.sh` lists `scripts/01_audit_sources.py` through `scripts/11_neighborhood_path.py` in that order and exits at the first non-zero status. No process listens on a port.
 
 ## Phase audit-sources: Show asthma period kinds and traffic year counts
 depends_on:

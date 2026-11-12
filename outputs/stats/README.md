@@ -8,7 +8,7 @@ Exposure, `traffic_mean_vehicles_per_hour`, is vehicles per complete counted hou
 
 The primary period is chosen before any p-value is read. `years.primary_preference` is 2023. That year is included and has 32 valid neighborhoods, which clears `thresholds.min_uhf_per_period` (30), so 2023 is primary. The other six years are secondary. Holm adjustment is applied only to the secondary Pearson p-values.
 
-The figures that plot these tables are under `outputs/figures/results/`: `R1_primary_scatter` (2023), `R2_comparison_scatter` (the latest year that is not primary, 2022), `R3_correlation_forest` (every tested year), and `R4_pearson_spearman` (both coefficients). Sample figures S1–S7 under `outputs/figures/sample/` describe the same merged file and do not print p-values.
+The figures that plot these tables are under `outputs/figures/results/`: `R1_primary_scatter` (2023), `R2_comparison_scatter` (the latest year that is not primary, 2022), `R3_correlation_forest` (every tested year), and `R4_pearson_spearman` (both coefficients). Sample figures S1–S7 under `outputs/figures/sample/` describe the same merged file and do not print p-values. Three neighborhood path charts under `outputs/figures/neighborhood/` follow Hunts Point - Mott Haven, High Bridge - Morrisania, and Crotona - Tremont across their valid years. Each title prints that neighborhood's own Pearson *r*, p-value, and a reading of positive, negative, or null. They are described in the figure guide. They do not add a row to the Pearson table.
 
 The numbers below are the values currently stored in these CSVs. A new run of `scripts/08_describe.py` and `scripts/09_test_hypotheses.py` rewrites the CSVs. This note is not rewritten by those scripts.
 

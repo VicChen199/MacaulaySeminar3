@@ -253,6 +253,10 @@ def format_report(lines):
     return _format_figures(lines, "Result figures", primary=False)
 
 
+def format_neighborhood(lines):
+    return _format_figures(lines, "Neighborhood paths", primary=False)
+
+
 def format_hypotheses(lines):
     out = []
     state = {"section": None}
@@ -287,6 +291,7 @@ FORMATTERS = {
     "08": format_describe,
     "09": format_hypotheses,
     "10": format_report,
+    "11": format_neighborhood,
 }
 
 
@@ -363,6 +368,7 @@ run_stage "07" "Merge traffic with asthma rates" "scripts/07_merge.py"
 run_stage "08" "Describe the sample and draw figures" "scripts/08_describe.py"
 run_stage "09" "Test the correlation hypotheses" "scripts/09_test_hypotheses.py"
 run_stage "10" "Write the report" "scripts/10_report.py"
+run_stage "11" "Draw neighborhood paths" "scripts/11_neighborhood_path.py"
 
 _pipeline_end=$(date +%s)
 _show ""

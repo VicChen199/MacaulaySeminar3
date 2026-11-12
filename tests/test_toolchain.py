@@ -19,6 +19,7 @@ SCRIPT_ROUTE = (
     "scripts/08_describe.py",
     "scripts/09_test_hypotheses.py",
     "scripts/10_report.py",
+    "scripts/11_neighborhood_path.py",
 )
 
 PINNED_MINIMUMS = (
