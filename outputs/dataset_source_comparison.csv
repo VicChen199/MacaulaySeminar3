@@ -1,0 +1,8 @@
+period,asthma_available,automated_available,historical_available,aadt_available,raw_record_count,distinct_segments,n_uhf_with_traffic,n_uhf_with_asthma,n_matched,n_usable,recommended_source
+2023,true,true,false,false,85106,127,32,42,35,32,automated
+2022,true,true,false,false,78652,99,30,42,30,30,automated
+2019,true,true,false,false,115730,189,35,42,38,35,automated
+2018,true,true,false,false,98961,203,36,42,37,36,automated
+2017,true,true,false,false,123901,280,35,42,36,35,automated
+2016,true,true,false,false,129617,332,39,42,40,39,automated
+2015,true,true,false,false,124428,314,37,42,40,37,automated
