@@ -34,3 +34,9 @@ attempts: 2
 repairs: 1
 result: passed
 commit: 3aa498c88e01c62d02279e5e48e070e47abe6704
+
+## aggregate-traffic
+attempts: 3
+repairs: 2
+result: passed
+commit: 385f0bc21e32fca59bb947d552d0c749e2c39fb3
