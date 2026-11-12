@@ -71,3 +71,8 @@ commit: be7cc31f645a9e6e23604d20e12ff7101a6cc9c9
 attempts: 1
 result: passed
 commit: ee2dda18fc36bba6b9b97763d490eebe361a320e
+
+## drop-non-quarter-minutes / Drop non-quarter automated rows in cleaning
+attempts: 1
+result: passed
+commit: cce01481fbb0a5d4b363cc71dcfed4b75d92a217

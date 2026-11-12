@@ -28,7 +28,7 @@ existing_tests:
 - tests/test_select_sources.py::test_two_directions_keep_an_hour_only_when_both_are_present
 
 ## Slice: Drop non-quarter automated rows in cleaning
-status: todo
+status: done
 goal: Cleaning removes automated rows whose minute is an integer outside {0, 15, 30, 45} and lists each removed row.
 owns:
 - lib/clean_traffic.py
