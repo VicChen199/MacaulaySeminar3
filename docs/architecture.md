@@ -13,6 +13,7 @@ Settled in this contract so the map can be planned. The stack choices came from 
 - For a pooled asthma period, the neighborhood exposure is the unweighted mean of that neighborhood's year-level means. The neighborhood must be eligible in every constituent year (`pool.require_all_years = true`).
 - Automated counts and historical counts may be used for different periods only when the comparability check in `select-sources` passes. That check uses traffic versus traffic, with Pearson r at least `sources.mix_min_traffic_r` (0.8) and at least `min_uhf_per_period` overlapping neighborhoods. It does not read asthma rates. AADT never shares a series with another source.
 - The primary exposure is the observed-hour mean defined under Data model. The hour-of-day balanced mean is a sensitivity measure.
+- A second series uses one LION snapshot. The exposure is kilometers of constructed highway, bridge, tunnel, and ramp centerline per square kilometer of the UHF42 polygon. Roadway type 1 (Street) is not a major road. The same score joins every asthma period. Its Pearson test does not replace the primary exposure and does not read `traffic_mean_vehicles_per_hour`.
 - Sample maps are static, one file per period.
 - Pearson confidence intervals come from `scipy.stats.pearsonr(...).confidence_interval` (SciPy >= 1.12). Holm adjustment is coded with NumPy inside `lib/stats.py`. Alpha stays 0.05 and is not a sensitivity knob.
 - Unusually high 15-minute counts (above the within-year 99.9th percentile) are flagged and kept.
@@ -25,7 +26,7 @@ The pipeline answers, for New York City's 42 United Hospital Fund neighborhoods:
 
 H₀: the population Pearson correlation ρ between neighborhood mean hourly traffic volume and the asthma ED rate is 0. H₁ predicts a positive correlation. The primary test is a two-sided Pearson correlation at α = 0.05. The sign of r is reported separately. The unit of analysis is the UHF42 neighborhood. n is the number of neighborhoods in a test.
 
-The pipeline will not claim that traffic causes asthma visits, will not compare results to background literature inside `results_summary.md`, will not analyze 2020 or 2021, will not split a multi-year asthma estimate into annual outcomes, will not impute missing asthma or traffic values as zero, will not mix AADT with automated or historical counts in one correlation series, will not choose the primary period by the smallest p-value, and will not change coverage thresholds after seeing a p-value.
+The pipeline will not claim that traffic causes asthma visits, will not compare results to background literature inside `results_summary.md`, will not analyze 2020 or 2021, will not split a multi-year asthma estimate into annual outcomes, will not impute missing asthma or traffic values as zero, will not mix AADT with automated or historical counts in one correlation series, will not choose the primary period by the smallest p-value, and will not change coverage thresholds after seeing a p-value. It will not replace the primary test with the major-road series, and it will not treat LION roadway type 1 (Street) as a major road.
 
 ## Stack
 
@@ -46,11 +47,11 @@ pytest
 python scripts/01_audit_sources.py
 ```
 
-`./run_all.sh` is a caller, not an operation. It exports `PYTHONPATH=.`, runs `scripts/01` through `scripts/10` in order, and stops at the first non-zero exit.
+`./run_all.sh` is a caller, not an operation. It exports `PYTHONPATH=.`, runs `scripts/01` through `scripts/08`, then `scripts/11_score_major_roads.py`, then `scripts/09_test_hypotheses.py` and `scripts/10_report.py`, and stops at the first non-zero exit.
 
 ## Runtime
 
-The terminal starts one script at a time. Each script loads `config/pipeline.toml`, calls `lib/`, and writes files. Third parties are the Socrata APIs for automated counts (`7ym2-wayt`), historical counts (`btm5-ppia`), and AADT (`6amx-2pbv`), plus the GitHub geography repository on the first boundary download. LION, when a boundary case needs it, is a local file path, not an API.
+The terminal starts one script at a time. Each script loads `config/pipeline.toml`, calls `lib/`, and writes files. Third parties are the Socrata APIs for automated counts (`7ym2-wayt`), historical counts (`btm5-ppia`), and AADT (`6amx-2pbv`), plus the GitHub geography repository on the first boundary download. LION for `assign-uhf` stays the local `geography.lion_path` and is not an API. `score-major-roads` reads that path when the file exists; when the path is empty it downloads one LION shapefile from `geography.lion_url` and reuses the extract. That extract is not passed to `assign-uhf`.
 
 Layout the scripts call:
 
@@ -63,10 +64,11 @@ Layout the scripts call:
 - `lib/aggregate.py` — `complete_hours`, `location_years`, `segment_years`, `neighborhood_periods`
 - `lib/merge.py` — `merge_uhf_period`
 - `lib/describe.py` — `descriptive_tables`
-- `lib/stats.py` — `pearson_by_period`, `spearman_by_period`, `sensitivity`, `compare_periods`
+- `lib/major_roads.py` — `score_major_roads`, `ensure_lion`
+- `lib/stats.py` — `pearson_by_period`, `spearman_by_period`, `sensitivity`, `compare_periods`, `major_road_pearson`
 - `lib/plots.py` — `sample_figures`, `result_figures`
 - `lib/report.py` — `workbook`, `narratives`, `compile_exclusions`
-- `scripts/01_audit_sources.py` through `scripts/10_report.py`
+- `scripts/01_audit_sources.py` through `scripts/10_report.py`, plus `scripts/11_score_major_roads.py` between describe and the hypothesis test
 - `run_all.sh`, `tests/`, `tests/fixtures/`
 
 The system map is the flowchart in the next section that has a route trace. It is drawn from the traces below.
@@ -293,14 +295,40 @@ sequenceDiagram
   Outputs-->>Terminal: status, exit_code, paths
 ```
 
+### score-major-roads
+
+caller: Terminal, the command that starts the major-road score.
+request: `python scripts/11_score_major_roads.py`. Arguments: none. Reads the local UHF shapefile and config `geography.lion_path` (str), `geography.lion_url` (str), `geography.lion_major_rw_types` (list of int), `geography.lion_constructed_status` (list of int).
+handler: `ensure_lion` uses `geography.lion_path` when that file exists. When the path is empty, it reuses `data/raw/geography/lion/` if `LION_SOURCE.txt` is present, and otherwise downloads `geography.lion_url` once and writes the URL and sha256 into `LION_SOURCE.txt`. It does not rewrite `config/pipeline.toml` and does not pass the extract to `assign-uhf`. `score_major_roads` keeps centerlines whose roadway type is in `lion_major_rw_types` and whose status is in `lion_constructed_status`. The defaults are roadway types 2 Highway, 3 Bridge, 4 Tunnel, and 9 Ramp, and status 2 Constructed. Roadway type 1 (Street) is dropped. Integer fields may arrive as text; the comparison uses the stripped integer. Lines and polygons are reprojected to EPSG:2263. Length is the centerline portion inside a neighborhood, converted to kilometers with the CRS meter factor. A portion that meets more than one polygon is assigned to the polygon with the longer intersection, and a tie goes to the lower `uhf42_id` string. `major_road_km_per_km2` is that length divided by the polygon area in square kilometers. A neighborhood with no assigned length stores 0. The score has no year.
+stages: Terminal, Python, Config, GeographyLocal, LION, Outputs, Terminal.
+response: `status` str, `exit_code` int, `message` str, `outputs/data/major_road_burden.csv` (table `major_road_burden`). A download or a reused extract also leaves `data/raw/geography/LION_SOURCE.txt`.
+screen: On success the terminal prints the neighborhood count, the median kilometers per square kilometer, and the count of neighborhoods whose score is 0, and exits 0. A missing shapefile prints that the person should run `select-sources` and exits 2. A LION file without a roadway-type field or a status field prints the field names and exits 2. A result that is not the 42 UHF ids exits 2 and writes no score file. A failed download prints the URL and exits 1.
+diagram:
+
+```mermaid
+sequenceDiagram
+  participant Terminal
+  participant Python
+  participant Config
+  participant GeographyLocal
+  participant LION
+  participant Outputs
+  Terminal->>Python: python scripts/11_score_major_roads.py
+  Python->>Config: load_config
+  Config->>GeographyLocal: UHF polygons
+  GeographyLocal->>LION: ensure_lion
+  LION->>Outputs: score_major_roads
+  Outputs-->>Terminal: major_road_burden, neighborhood count, median
+```
+
 ### test-hypotheses
 
 caller: Terminal, the command that starts the tests.
-request: `python scripts/09_test_hypotheses.py`. Arguments: none. Reads `final_merged_dataset.csv`, `traffic_location_year.parquet`, and config `years.primary_preference` (int), `stats.alpha` (float, 0.05), `thresholds.sensitivity_min_segments` (list of int), `thresholds.sensitivity_min_hours` (list of int), `stats.bootstrap_comparisons` (bool).
-handler: A period whose usable n is below `min_uhf_per_period` is skipped with reason `below_min_uhf` and cannot become primary. The primary period is `primary_preference` when that period is included and its usable n is at least `min_uhf_per_period`. Otherwise it is the most recent included period that meets the threshold. The choice is recorded in `primary_reason` and does not look at p-values. `pearson_by_period` runs `scipy.stats.pearsonr` two-sided on usable rows, x = `traffic_mean_vehicles_per_hour`, y = `asthma_ed_rate_per_10000`, one test per included period. It records t = r * sqrt((n - 2) / (1 - r^2)) and df = n - 2, and the 95% interval from `confidence_interval`. SciPy supplies the p-value. A relative gap larger than 1e-4 between the formula t and SciPy's t exits 2. n below 3, zero variance, or |r| = 1 writes `test_status=skipped` and a null p-value. Holm adjustment is applied only to secondary periods with `test_status=ok`. `spearman_by_period` repeats the periods with Spearman's rank correlation. `sensitivity` reruns Pearson for leave-one-neighborhood-out on the primary period, for the stricter segment and hour thresholds, for the intersection of neighborhoods across included periods, and for the intersection of road segments, re-aggregated from `traffic_location_year.parquet`. `compare_periods` writes direction, magnitude, whether the interval contains 0, sample overlap, and `measurement_consistency`. It does not pool neighborhood-years into one Pearson test. Bootstrap comparisons run only when the flag is true, resampling neighborhoods while keeping each neighborhood's paired periods together.
+request: `python scripts/09_test_hypotheses.py`. Arguments: none. Reads `final_merged_dataset.csv`, `traffic_location_year.parquet`, `major_road_burden.csv`, and config `years.primary_preference` (int), `stats.alpha` (float, 0.05), `thresholds.sensitivity_min_segments` (list of int), `thresholds.sensitivity_min_hours` (list of int), `stats.bootstrap_comparisons` (bool).
+handler: A period whose usable n is below `min_uhf_per_period` is skipped with reason `below_min_uhf` and cannot become primary. The primary period is `primary_preference` when that period is included and its usable n is at least `min_uhf_per_period`. Otherwise it is the most recent included period that meets the threshold. The choice is recorded in `primary_reason` and does not look at p-values. `pearson_by_period` runs `scipy.stats.pearsonr` two-sided on usable rows, x = `traffic_mean_vehicles_per_hour`, y = `asthma_ed_rate_per_10000`, one test per included period. It records t = r * sqrt((n - 2) / (1 - r^2)) and df = n - 2, and the 95% interval from `confidence_interval`. SciPy supplies the p-value. A relative gap larger than 1e-4 between the formula t and SciPy's t exits 2. n below 3, zero variance, or |r| = 1 writes `test_status=skipped` and a null p-value. Holm adjustment is applied only to secondary periods with `test_status=ok`. `spearman_by_period` repeats the periods with Spearman's rank correlation. `sensitivity` reruns Pearson for leave-one-neighborhood-out on the primary period, for the stricter segment and hour thresholds, for the intersection of neighborhoods across included periods, and for the intersection of road segments, re-aggregated from `traffic_location_year.parquet`. `compare_periods` writes direction, magnitude, whether the interval contains 0, sample overlap, and `measurement_consistency`. It does not pool neighborhood-years into one Pearson test. Bootstrap comparisons run only when the flag is true, resampling neighborhoods while keeping each neighborhood's paired periods together. `major_road_pearson` then joins the one score to every neighborhood with a non-null asthma rate, including rows whose `coverage_status` is `insufficient`. Its x is `major_road_km_per_km2` and its y is `asthma_ed_rate_per_10000`. It uses the primary period the count-site rule already chose. It records the same t, df, interval, and two-sided p-value. Holm adjustment applies only to secondary periods of this series. It does not edit the count-site Pearson rows and does not run Spearman, sensitivity, or bootstrap on this series. A score of 0 stays in the test.
 stages: Terminal, Python, Config, Outputs, Terminal.
-response: `status` str, `exit_code` int, `message` str, `outputs/stats/pearson_results_by_year.csv` (table `pearson_results`), `outputs/stats/spearman_results_by_year.csv` (table `spearman_results`), `outputs/stats/sensitivity_analysis_results.csv` (table `sensitivity_results`), `outputs/stats/correlation_comparison_results.csv` (table `correlation_comparison`).
-screen: On success the terminal prints the primary period, r, the confidence interval, and the p-value, then one line per secondary period. When every period is skipped, it prints the skip reasons and exits 2. It does not print a fabricated p-value.
+response: `status` str, `exit_code` int, `message` str, `outputs/stats/pearson_results_by_year.csv` (table `pearson_results`), `outputs/stats/spearman_results_by_year.csv` (table `spearman_results`), `outputs/stats/sensitivity_analysis_results.csv` (table `sensitivity_results`), `outputs/stats/correlation_comparison_results.csv` (table `correlation_comparison`), `outputs/stats/major_road_pearson_by_year.csv` (table `major_road_pearson`).
+screen: On success the terminal prints the primary period, r, the confidence interval, and the p-value, then one line per secondary period, then one line per major-road period with n, r, the interval, and the p-value. When every count-site period is skipped, it prints the skip reasons and exits 2. A skipped major-road period prints the reason and no p-value. A missing score file prints the path and exits 2, and that run writes none of the stat tables. It does not print a fabricated p-value.
 diagram:
 
 ```mermaid
@@ -311,18 +339,18 @@ sequenceDiagram
   participant Outputs
   Terminal->>Python: python scripts/09_test_hypotheses.py
   Python->>Config: load_config
-  Config->>Outputs: read final_merged and traffic_location_year
-  Outputs-->>Terminal: pearson, spearman, sensitivity, and comparison tables
+  Config->>Outputs: read final_merged, traffic_location_year, and major_road_burden
+  Outputs-->>Terminal: pearson, spearman, sensitivity, comparison, and major-road tables
 ```
 
 ### write-report
 
 caller: Terminal, the command that starts the report.
-request: `python scripts/10_report.py`. Arguments: none. Reads the stat tables, the merged dataset, the comparison table, the exclusion logs, and `source_selection.json`.
-handler: `result_figures` writes R1 for the primary period and R3 for every tested period, as PNG and PDF, with n, r, and the exact p-value on the statistical charts. R2 uses the most recent included period that is not the primary, on the same axis units as R1 when the ranges allow a shared scale. R4 plots Pearson and Spearman side by side and labels the test on each point. `workbook` writes the nine sheets listed in Data model. `compile_exclusions` concatenates the exclusion logs into `excluded_observations.csv`. `narratives` fills `results_summary.md` and `interpretation_guide.md` from the CSV values and a fixed sentence bank. The summary has four parts: the question and hypotheses; sources, sample size, variables, and descriptive statistics; the primary numbers without an explanation of why they arose; and the test justification with p-values and the file names of R1 and R3. The interpretation guide defines n, r, the p-value, the confidence interval, the directional reading, cross-period consistency, and the ecological limit, using the actual numbers. Neither file adds a causal claim or a literature comparison. This script does not rewrite `README.md`.
+request: `python scripts/10_report.py`. Arguments: none. Reads the stat tables, `major_road_pearson_by_year.csv`, `major_road_burden.csv`, the merged dataset, the comparison table, the exclusion logs, and `source_selection.json`.
+handler: `result_figures` writes R1 for the primary period and R3 for every tested period, as PNG and PDF, with n, r, and the exact p-value on the statistical charts. R2 uses the most recent included period that is not the primary, on the same axis units as R1 when the ranges allow a shared scale. R4 plots Pearson and Spearman side by side and labels the test on each point. R5 is the primary-period scatter of `major_road_km_per_km2` against the asthma rate, with n, r, and the exact p-value. `workbook` writes the ten sheets listed in Data model. `compile_exclusions` concatenates the exclusion logs into `excluded_observations.csv`. `narratives` fills `results_summary.md` and `interpretation_guide.md` from the CSV values and a fixed sentence bank. The summary has five parts: the question and hypotheses; sources, sample size, variables, and descriptive statistics; the primary numbers without an explanation of why they arose; the test justification with p-values and the file names of R1 and R3; and the major-road numbers with n, r, the interval, the p-value, and the file name of R5. The first four parts stay the count-site test. The interpretation guide defines n, r, the p-value, the confidence interval, the directional reading, cross-period consistency, the ecological limit, and `major_road_km_per_km2`, using the actual numbers. Neither file adds a causal claim or a literature comparison. This script does not rewrite `README.md`.
 stages: Terminal, Python, Config, Outputs, Terminal.
-response: `status` str, `exit_code` int, `message` str, figure files R1–R4, `outputs/research_results.xlsx`, `outputs/quality/excluded_observations.csv`, `outputs/results_summary.md`, `outputs/interpretation_guide.md`.
-screen: On success the terminal prints the workbook path and the figure paths. When at least one Pearson row has `test_status=ok`, R1 and R3 exist. When only one period was tested, R2 is omitted and the summary says so, and the script still exits 0 because R1 and R3 are the two statistical graphs. When no test is ok, it writes the summary's limitation statement and exits 2.
+response: `status` str, `exit_code` int, `message` str, figure files R1–R5, `outputs/research_results.xlsx`, `outputs/quality/excluded_observations.csv`, `outputs/results_summary.md`, `outputs/interpretation_guide.md`.
+screen: On success the terminal prints the workbook path and the figure paths. When at least one count-site Pearson row has `test_status=ok`, R1 and R3 exist. When only one period was tested, R2 is omitted and the summary says so, and the script still exits 0 because R1 and R3 are the two count-site statistical graphs. When the major-road primary row is ok, R5 exists. When that row is skipped and a count-site test is ok, R5 is omitted, the fifth part states the skip, and the script exits 0. When no count-site test is ok, it writes the summary's limitation statement and exits 2. A missing major-road table prints the path and exits 2.
 diagram:
 
 ```mermaid
@@ -334,14 +362,14 @@ sequenceDiagram
   Terminal->>Python: python scripts/10_report.py
   Python->>Config: load_config
   Config->>Outputs: result_figures, workbook, narratives, compile_exclusions
-  Outputs-->>Terminal: workbook, figures R1 to R4, reports, exit_code
+  Outputs-->>Terminal: workbook, figures R1 to R5, reports, exit_code
 ```
 
 ### run-tests
 
 caller: Terminal, the pytest command.
 request: `pytest`. Arguments: none. Reads `tests/fixtures/` only. It does not read `data/`, `outputs/`, or the network.
-handler: pytest runs the invariant tests: pagination advances the offset by the rows in the page; a duplicate `:id` blocks compaction; an hour sum requires four distinct quarters and is the sum, not the mean, of those volumes; a segment with two locations receives one vote; the merge rejects a duplicate neighborhood-period key; an interior fixture point joins to one polygon; a pooled `TimePeriod` stays one period; a suppressed rate stays null; the primary-period function ignores a smaller p-value on an earlier year.
+handler: pytest runs the invariant tests: pagination advances the offset by the rows in the page; a duplicate `:id` blocks compaction; an hour sum requires four distinct quarters and is the sum, not the mean, of those volumes; a segment with two locations receives one vote; the merge rejects a duplicate neighborhood-period key; an interior fixture point joins to one polygon; a pooled `TimePeriod` stays one period; a suppressed rate stays null; the primary-period function ignores a smaller p-value on an earlier year; a LION street adds no major-road length and a boundary tie goes to the lower `uhf42_id`.
 stages: Terminal, Python, Fixtures, Terminal.
 response: `status` str, `exit_code` int, `message` str (pytest's summary line).
 screen: On success the terminal shows the passed count and exits 0. A failed assertion names the invariant and exits non-zero. There is no empty-data state; the fixtures are part of the repository.
@@ -383,6 +411,7 @@ flowchart LR
   Terminal -->|"aggregate-traffic"| Python
   Terminal -->|"merge-analysis"| Python
   Terminal -->|"describe-sample"| Python
+  Terminal -->|"score-major-roads"| Python
   Terminal -->|"test-hypotheses"| Python
   Terminal -->|"write-report"| Python
   Terminal -->|"run-tests"| Python
@@ -395,6 +424,7 @@ flowchart LR
   Python -->|"aggregate-traffic"| Config
   Python -->|"merge-analysis"| Config
   Python -->|"describe-sample"| Config
+  Python -->|"score-major-roads"| Config
   Python -->|"test-hypotheses"| Config
   Python -->|"write-report"| Config
   Python -->|"run-tests"| Fixtures
@@ -407,6 +437,7 @@ flowchart LR
   Config -->|"aggregate-traffic"| Outputs
   Config -->|"merge-analysis"| Outputs
   Config -->|"describe-sample"| Outputs
+  Config -->|"score-major-roads"| GeographyLocal
   Config -->|"test-hypotheses"| Outputs
   Config -->|"write-report"| Outputs
 
@@ -429,6 +460,8 @@ flowchart LR
   GeographyLocal -->|"assign-uhf"| Outputs
   Outputs -->|"describe-sample"| GeographyLocal
   GeographyLocal -->|"describe-sample"| Outputs
+  GeographyLocal -->|"score-major-roads"| LION
+  LION -->|"score-major-roads"| Outputs
 
   Outputs -->|"audit-sources"| Terminal
   Outputs -->|"select-sources"| Terminal
@@ -438,6 +471,7 @@ flowchart LR
   Outputs -->|"aggregate-traffic"| Terminal
   Outputs -->|"merge-analysis"| Terminal
   Outputs -->|"describe-sample"| Terminal
+  Outputs -->|"score-major-roads"| Terminal
   Outputs -->|"test-hypotheses"| Terminal
   Outputs -->|"write-report"| Terminal
   Fixtures -->|"run-tests"| Terminal
@@ -533,44 +567,55 @@ This journey uses `merge-analysis`.
 
 This journey uses `describe-sample`.
 
+### Score major-road length
+
+1. Screen: Terminal. The person runs the score after the UHF shapefile is on disk.
+2. Request: `python scripts/11_score_major_roads.py`. Trace `score-major-roads`.
+3. Handler: `ensure_lion`, then `score_major_roads`. A local `geography.lion_path` wins. An empty path downloads `geography.lion_url` once. Roadway type 1 is dropped. A boundary tie goes to the lower `uhf42_id`.
+4. Tables: reads the UHF shapefile and the LION extract; writes `major_road_burden`. Invariant: 42 unique ids, a street adds no length, a zero score stays zero, and `major_road_km_per_km2` equals kilometers divided by square kilometers.
+5. Response: status, exit code, and the score path.
+6. Screen: the terminal prints the neighborhood count, the median score, and the zero-score count. A missing shapefile, a missing roadway-type or status field, or an id set other than the 42 UHF ids exits 2. A failed download exits 1 with the URL.
+
+This journey uses `score-major-roads`.
+
 ### Test the correlation and compare periods
 
-1. Screen: Terminal. The person runs the hypothesis script after the merge and the location-year file exist.
+1. Screen: Terminal. The person runs the hypothesis script after the merge, the location-year file, and `major_road_burden.csv` exist.
 2. Request: `python scripts/09_test_hypotheses.py`. Trace `test-hypotheses`.
-3. Handler: `pearson_by_period`, `spearman_by_period`, `sensitivity`, and `compare_periods`. The primary period follows the preference rule. Spearman and the sensitivity runs do not replace the primary Pearson row.
-4. Tables: reads `final_merged` and `traffic_location_year`; writes the four stat tables. Invariant: one Pearson row per included period, raw p-values kept, Holm applied only to secondary tests, no pooled test that treats a neighborhood's years as independent.
-5. Response: status, exit code, and the primary r, interval, and p-value.
-6. Screen: the terminal prints the primary line and each secondary line. Skipped tests show a reason and a blank p-value. When every period is skipped, the script exits 2.
+3. Handler: `pearson_by_period`, `spearman_by_period`, `sensitivity`, `compare_periods`, and `major_road_pearson`. The primary period follows the preference rule. Spearman, the sensitivity runs, and the major-road series do not replace the primary Pearson row.
+4. Tables: reads `final_merged`, `traffic_location_year`, and `major_road_burden`; writes the four count-site stat tables and `major_road_pearson`. Invariant: one count-site Pearson row per included period, one major-road row per included period, raw p-values kept, Holm applied only inside each series, no pooled test that treats a neighborhood's years as independent.
+5. Response: status, exit code, the primary r, interval, and p-value, and the major-road r.
+6. Screen: the terminal prints the primary line, each secondary line, and each major-road line. Skipped tests show a reason and a blank p-value. When every count-site period is skipped, the script exits 2. A missing score file exits 2 and writes no stat tables.
 
 This journey uses `test-hypotheses`.
 
 ### Write the results packet
 
-1. Screen: Terminal. The person runs the report after at least one successful Pearson test, then opens the workbook, the figures, and the two markdown files.
+1. Screen: Terminal. The person runs the report after at least one successful count-site Pearson test, then opens the workbook, the figures, and the two markdown files.
 2. Request: `python scripts/10_report.py`. Trace `write-report`.
-3. Handler: `result_figures`, `workbook`, `compile_exclusions`, and `narratives`.
-4. Tables: reads the stat tables and exclusion logs; writes the workbook, R figures, `excluded_observations`, and the two reports. Invariant: every r and p in the markdown matches the Pearson CSV, and the summary's third section does not explain causes.
+3. Handler: `result_figures`, `workbook`, `compile_exclusions`, and `narratives`. R5 is the major-road scatter. The fifth summary part states that series.
+4. Tables: reads the stat tables, `major_road_pearson`, `major_road_burden`, and the exclusion logs; writes the workbook, R figures, `excluded_observations`, and the two reports. Invariant: every count-site r and p in the first four parts matches the Pearson CSV, every major-road r and p in the fifth part matches `major_road_pearson`, and the summary does not explain causes.
 5. Response: status, exit code, workbook path, and figure paths.
-6. Screen: the terminal prints those paths. R1 and R3 are present when a test is ok. A single tested period omits R2 and says so in the summary. Zero successful tests exit 2 after the limitation statement.
+6. Screen: the terminal prints those paths. R1 and R3 are present when a count-site test is ok. A single tested period omits R2 and says so in the summary. R5 is present when the major-road primary row is ok, and omitted with a stated skip when that row is skipped. Zero successful count-site tests exit 2 after the limitation statement. A missing major-road table exits 2.
 
 This journey uses `write-report`.
 
 ### Reproduce the study
 
 1. Screen: Terminal. The person creates the virtualenv, installs `requirements.txt`, places the asthma export, and runs `./run_all.sh`.
-2. Request: the shell runs, in order, the commands of `audit-sources`, `select-sources`, `download-traffic`, `clean`, `assign-uhf`, `aggregate-traffic`, `merge-analysis`, `describe-sample`, `test-hypotheses`, and `write-report`. The shell is a caller. It adds no operation.
+2. Request: the shell runs, in order, the commands of `audit-sources`, `select-sources`, `download-traffic`, `clean`, `assign-uhf`, `aggregate-traffic`, `merge-analysis`, `describe-sample`, `score-major-roads`, `test-hypotheses`, and `write-report`. The shell is a caller. It adds no operation.
 3. Handler: each script's handler runs as in its own journey. A non-zero exit stops the shell.
-4. Tables: the tables named in those ten traces, in that order. Invariant: a later script reads an earlier script's outputs and does not recompute a source decision.
+4. Tables: the tables named in those eleven traces, in that order. Invariant: a later script reads an earlier script's outputs and does not recompute a source decision.
 5. Response: the last script's status, or the status of the script that stopped the shell.
 6. Screen: the terminal shows each script's summary in order. A data-quality stop leaves the files of the failed script and does not run later scripts. The person reads `outputs/results_summary.md` when `write-report` exits 0.
 
-This journey uses those ten traces.
+This journey uses those eleven traces.
 
 ### Check invariants
 
 1. Screen: Terminal. The person runs pytest, with or without a data download.
 2. Request: `pytest`. Trace `run-tests`.
-3. Handler: pytest executes the nine invariant tests in the `run-tests` trace.
+3. Handler: pytest executes the invariant tests in the `run-tests` trace, including the major-road length rule.
 4. Tables: reads `tests/fixtures/` only. Invariant: a test does not write `outputs/` and does not call Socrata.
 5. Response: pytest's exit code and summary line.
 6. Screen: a passing run prints the passed count. A failure prints the invariant name.
@@ -617,6 +662,9 @@ This journey uses `run-tests`.
 | geography.coordinate_round_meters | float | 1 |
 | geography.id_crosswalk_csv | str | empty |
 | geography.lion_path | str | empty |
+| geography.lion_url | str | https://data.cityofnewyork.us/api/geospatial/2v4z-66xt?method=export&format=Shapefile |
+| geography.lion_major_rw_types | list of int | 2, 3, 4, 9 |
+| geography.lion_constructed_status | list of int | 2 |
 | pool.require_all_years | bool | true |
 | stats.alpha | float | 0.05 |
 | stats.bootstrap_comparisons | bool | false |
@@ -689,17 +737,23 @@ One row per neighborhood per asthma period, including insufficient rows. Columns
 
 `correlation_comparison`: `period` str, `n` int, `r` float or null, `p_raw` float or null, `p_holm` float or null, `ci_low` float or null, `ci_high` float or null, `sign` str, `traffic_source` str, `n_segments_median` float, `measurement_consistency` str.
 
+`major_road_burden`: one row per UHF42 neighborhood. Columns: `uhf42_id` str, `major_road_km` float, `area_km2` float, `major_road_km_per_km2` float, `n_major_pieces` int. Invariant: 42 unique ids; `major_road_km` is the partitioned length of constructed roadway types 2, 3, 4, and 9; `major_road_km_per_km2` equals `major_road_km / area_km2`; a neighborhood with no such centerline has `major_road_km` 0.
+
+`major_road_pearson`: `period` str, `role` str (`primary` or `secondary`), `n` int, `r` float or null, `t` float or null, `df` int or null, `p_raw` float or null, `p_holm` float or null, `ci_low` float or null, `ci_high` float or null, `alpha` float, `p_below_alpha` bool, `sign` str, `primary_reason` str, `test_status` str, `skip_reason` str. The role uses the count-site primary period. x is `major_road_km_per_km2`. This table does not replace `pearson_results`.
+
 ### Figures and workbook
 
 Sample figures, PNG and PDF, under `outputs/figures/sample/`: `S1_traffic_distribution`, `S2_asthma_distribution`, `S3_coverage_by_period`, `S4_coverage_heatmap`, `S5_asthma_boxplots`, `S6_traffic_boxplots`, `S7_coverage_map_<period-slug>`.
 
-Result figures, PNG and PDF, under `outputs/figures/results/`: `R1_primary_scatter`, `R2_comparison_scatter` when a second period exists, `R3_correlation_forest`, `R4_pearson_spearman`.
+Result figures, PNG and PDF, under `outputs/figures/results/`: `R1_primary_scatter`, `R2_comparison_scatter` when a second period exists, `R3_correlation_forest`, `R4_pearson_spearman`, `R5_major_road_scatter` when the major-road primary row is ok.
 
-`outputs/research_results.xlsx` sheets, in order: Year and Source Coverage, Matched Dataset, Sample Characteristics, Descriptive Statistics, Pearson Correlations, Spearman Sensitivity, Correlation Comparisons, Missing Data and Exclusions, Data Dictionary. The dictionary rows are `file`, `column`, `type`, `meaning`, `units`, taken from the tables above.
+`outputs/research_results.xlsx` sheets, in order: Year and Source Coverage, Matched Dataset, Sample Characteristics, Descriptive Statistics, Pearson Correlations, Major Road Correlations, Spearman Sensitivity, Correlation Comparisons, Missing Data and Exclusions, Data Dictionary. The dictionary rows are `file`, `column`, `type`, `meaning`, `units`, taken from the tables above.
 
 ### Primary exposure
 
 For automated and historical counts, a complete hour is the sum of four distinct quarter-hour volumes. The location-day value is the mean of that day's complete hours. The location-year value is the mean of those days. The segment-year value is the mean of the segment's eligible locations. The neighborhood-year value is the mean of eligible segments. A pooled neighborhood value is the mean of those year values. The Pearson test reads that neighborhood value and the asthma rate per 10,000. The pipeline describes this as the mean of sampled complete hours, not as a complete annual average of every hour in the year.
+
+The major-road series reads `major_road_km_per_km2` and the same asthma rate. It is not the primary exposure.
 
 ## API catalog
 
@@ -713,15 +767,16 @@ For automated and historical counts, a complete hour is the sum of four distinct
 | aggregate-traffic | python scripts/06_aggregate_traffic.py | no CLI args; traffic_with_uhf42, thresholds, pool.require_all_years | status str, exit_code int, traffic_location_year.parquet, traffic_segment_year.parquet, traffic_uhf42_year.csv, traffic_coverage_by_uhf42.csv | exit 2 hour cannot be built; a period with zero eligible neighborhoods exits 0 | Terminal | Terminal, Python, Config, Outputs, Terminal |
 | merge-analysis | python scripts/07_merge.py | no CLI args; cleaned_asthma, traffic_uhf42_year, comparison table | status str, exit_code int, final_merged_dataset.csv, missing_data_report.csv, updated n_matched and n_usable | exit 2 duplicate key or more than 42 rows in a period | Terminal | Terminal, Python, Config, Outputs, Terminal |
 | describe-sample | python scripts/08_describe.py | no CLI args; final_merged, locations, figure GeoJSON | status str, exit_code int, two descriptive CSVs, figures S1–S7 png and pdf | exit 2 missing merged file; n of 0 writes an annotated figure and exits 0 | Terminal | Terminal, Python, Config, Outputs, GeographyLocal, Outputs, Terminal |
-| test-hypotheses | python scripts/09_test_hypotheses.py | no CLI args; final_merged, traffic_location_year, alpha, sensitivity lists, bootstrap flag | status str, exit_code int, pearson, spearman, sensitivity, and comparison CSVs | exit 2 every period skipped, or formula t far from SciPy t; a single skipped period stays a row with a null p | Terminal | Terminal, Python, Config, Outputs, Terminal |
-| write-report | python scripts/10_report.py | no CLI args; stat tables, exclusion logs, source_selection | status str, exit_code int, research_results.xlsx, R figures, excluded_observations.csv, results_summary.md, interpretation_guide.md | exit 2 when no Pearson test is ok; a missing R2 with one period exits 0 | Terminal | Terminal, Python, Config, Outputs, Terminal |
+| score-major-roads | python scripts/11_score_major_roads.py | no CLI args; UHF shapefile, lion_path, lion_url, lion_major_rw_types, lion_constructed_status | status str, exit_code int, major_road_burden.csv, LION_SOURCE.txt when an extract is used | exit 2 missing shapefile, missing roadway-type or status field, id set other than the 42 UHF ids; exit 1 failed download | Terminal | Terminal, Python, Config, GeographyLocal, LION, Outputs, Terminal |
+| test-hypotheses | python scripts/09_test_hypotheses.py | no CLI args; final_merged, traffic_location_year, major_road_burden, alpha, sensitivity lists, bootstrap flag | status str, exit_code int, pearson, spearman, sensitivity, comparison, and major_road_pearson CSVs | exit 2 every count-site period skipped, formula t far from SciPy t, or missing score file and no stat tables written; a single skipped period stays a row with a null p | Terminal | Terminal, Python, Config, Outputs, Terminal |
+| write-report | python scripts/10_report.py | no CLI args; stat tables, major_road_pearson, major_road_burden, exclusion logs, source_selection | status str, exit_code int, research_results.xlsx, R1–R5, excluded_observations.csv, results_summary.md, interpretation_guide.md | exit 2 when no count-site Pearson test is ok, or the major-road table is missing; a missing R2 with one period exits 0; a skipped major-road row omits R5 and exits 0 | Terminal | Terminal, Python, Config, Outputs, Terminal |
 | run-tests | pytest | no CLI args; tests/fixtures only | status str, exit_code int, pytest summary | non-zero when an invariant assertion fails | Terminal | Terminal, Python, Fixtures, Terminal |
 
 ## Screen catalog
 
 | screen | traces it calls |
 | --- | --- |
-| Terminal | audit-sources, select-sources, download-traffic, clean, assign-uhf, aggregate-traffic, merge-analysis, describe-sample, test-hypotheses, write-report, run-tests |
+| Terminal | audit-sources, select-sources, download-traffic, clean, assign-uhf, aggregate-traffic, merge-analysis, describe-sample, score-major-roads, test-hypotheses, write-report, run-tests |
 
 The workbook, the PNG and PDF figures, and the two markdown reports are files the person opens after `write-report`. They do not call an operation.
 
@@ -746,5 +801,9 @@ The person sees these on the terminal, and in the written tables when a script g
 - A period whose usable n is below 3, or whose traffic or rate has zero variance: a Pearson row with `test_status=skipped`, no p-value printed.
 - No successful Pearson test: `write-report` states the limitation and exits 2.
 - A descriptive chart with n of 0: the chart file exists and says no eligible neighborhood is available.
+- Major-road score file missing at the hypothesis test or the report: exit 2, the path printed, and the hypothesis test writes no stat tables.
+- LION extract missing a roadway-type field or a status field, or the score ids are not the 42 UHF ids: exit 2, the field names or the id mismatch printed, no `major_road_burden.csv`.
+- LION download failed: exit 1, the URL printed.
+- A major-road period with n below 3, zero variance, or |r| = 1: a `major_road_pearson` row with `test_status=skipped` and a null p-value. The count-site tables are still written when those tests are ok.
 
 ## Open decisions
