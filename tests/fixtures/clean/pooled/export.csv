@@ -1,0 +1,12 @@
+TimePeriod,GeoID,uhf42_name,borough,asthma_ed_count,asthma_ed_rate_per_10000,Age,Measure
+2015-2017,201,Harlem,Manhattan,8,9,4,ed
+2015-2017,202,Harlem East,Manhattan,1,2,99,adults
+2015 to 2016,301,Mott Haven,Bronx,3,4,4,ed
+2022–2023,302,Bedford,Brooklyn,5,6,4,ed
+2019,401,Astoria,Queens,7,8,4,ed
+2020,501,Drop Year,Manhattan,1,1,4,ed
+2021,502,Drop Excluded,Manhattan,1,1,4,ed
+2019-2022,503,Drop Range,Manhattan,1,1,4,ed
+2014,504,Drop Other,Manhattan,1,1,4,ed
+Winter,505,Drop Label,Manhattan,1,1,4,ed
+2015-2016-2017,506,Drop Multi,Manhattan,1,1,4,ed

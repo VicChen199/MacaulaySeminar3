@@ -1,0 +1,48 @@
+{
+  "automated": {
+    "columns": ["yr", "m", "d", "hh", "mm", "vol", "segmentid", "wktgeom", "direction", "boro", "requestid"],
+    "sample": {
+      "yr": "2019",
+      "m": "1",
+      "d": "15",
+      "hh": "8",
+      "mm": "0",
+      "vol": "1",
+      "segmentid": "seg-a",
+      "wktgeom": "POINT(-74.01 40.71)",
+      "direction": "NB",
+      "boro": "Manhattan",
+      "requestid": "req-11"
+    }
+  },
+  "historical": {
+    "columns": ["year", "month", "day", "hour", "volume", "segment", "wkt", "direction", "borough"],
+    "sample": {
+      "year": 2015,
+      "month": 6,
+      "day": 1,
+      "hour": 9,
+      "volume": 48,
+      "segment": "seg-h",
+      "wkt": "POINT(-73.95 40.80)",
+      "direction": "NB",
+      "borough": "Manhattan"
+    }
+  },
+  "aadt": {
+    "columns": ["year", "month", "day", "hour", "vol", "aadt", "segmentid", "wktgeom", "direction", "borough", "requestid"],
+    "sample": {
+      "year": "2022",
+      "month": "4",
+      "day": "5",
+      "hour": "12",
+      "vol": "999",
+      "aadt": "240",
+      "segmentid": "seg-adt",
+      "wktgeom": "POINT(-73.90 40.70)",
+      "direction": "North",
+      "borough": "Queens",
+      "requestid": "req-adt"
+    }
+  }
+}

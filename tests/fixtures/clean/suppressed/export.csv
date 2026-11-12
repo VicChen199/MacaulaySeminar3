@@ -1,0 +1,8 @@
+TimePeriod,GeoID,uhf42_name,borough,asthma_ed_count,asthma_ed_rate_per_10000,Age,Measure
+2019,0101,Washington Heights,manhattan,*,*,4,ed
+2018,101.0,Washington Heights,Manhattan,0,0,4,ed
+2022,102,Harlem,Bronx,s,s,99,adults
+2023,103,Astoria,QUEENS,suppressed,Suppressed,4,ed
+2016,104,Bay,Brooklyn, s , * ,4,ed
+2015,105,Shore,staten island,0,*,4,ed
+2017,106,Park,Manhattan,*,12.5,18,other
