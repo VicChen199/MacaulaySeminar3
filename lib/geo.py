@@ -177,10 +177,6 @@ _LOCATION_COLUMNS = (
     "uhf42_id",
     "assignment",
     "source_crs",
-    "borough_traffic",
-    "borough_polygon",
-    "rule",
-    "source",
 )
 _AUDIT_COLUMNS = (
     "monitoring_location_id",
@@ -251,11 +247,11 @@ def resolve_non_interior(locations, boundaries, lion):
         if outcome == "majority":
             locations.at[idx, "assignment"] = "lion_majority"
             locations.at[idx, "uhf42_id"] = uhf_id
-            locations.at[idx, "rule"] = "lion_majority"
+            _remember_rule(locations, idx, "lion_majority")
         elif outcome == "tie":
             locations.at[idx, "assignment"] = "boundary"
             locations.at[idx, "uhf42_id"] = None
-            locations.at[idx, "rule"] = "boundary"
+            _remember_rule(locations, idx, "boundary")
     if "uhf42_id" in locations.columns:
         locations["uhf42_id"] = pd.Series(
             [_none_if_null(value) for value in locations["uhf42_id"].tolist()],
@@ -297,19 +293,15 @@ def _package_outputs(locations, traffic_rows):
             "uhf42_id": [
                 _none_if_null(value) for value in locations["uhf42_id"].tolist()
             ],
-            "borough_traffic": locations["borough_traffic"].tolist(),
-            "borough_polygon": locations["borough_polygon"].tolist(),
-            "rule": locations["rule"].tolist(),
+            "borough_traffic": _side_values(locations, "borough_traffic"),
+            "borough_polygon": _side_values(locations, "borough_polygon"),
+            "rule": _side_values(locations, "rule"),
         },
         columns=list(_AUDIT_COLUMNS),
     )
     audit["uhf42_id"] = pd.Series(audit["uhf42_id"].tolist(), dtype="object")
     excluded = locations["assignment"].isin(_EXCLUSION_ASSIGNMENTS)
-    sources = (
-        locations["source"].tolist()
-        if "source" in locations.columns
-        else [""] * len(locations.index)
-    )
+    sources = _side_values(locations, "source")
     exclusions = pd.DataFrame(
         {
             "stage": ["assign-uhf"] * int(excluded.sum()),
@@ -468,17 +460,15 @@ def _classify_locations(records, prepared, config):
         uhf_ids.append(None)
         rules.append("outside")
         polygon_boroughs.append("")
+    borough_traffic = [
+        _borough_label(first[loc_id]["borough"], lookup) for loc_id in order
+    ]
+    sources = [first[loc_id]["source"] for loc_id in order]
     table = {
         "monitoring_location_id": order,
         "road_segment_id": [first[loc_id]["road_segment_id"] for loc_id in order],
         "assignment": assignments,
         "source_crs": [first[loc_id]["source_crs"] for loc_id in order],
-        "borough_traffic": [
-            _borough_label(first[loc_id]["borough"], lookup) for loc_id in order
-        ],
-        "borough_polygon": polygon_boroughs,
-        "rule": rules,
-        "source": [first[loc_id]["source"] for loc_id in order],
     }
     locations = gpd.GeoDataFrame(
         table,
@@ -486,7 +476,12 @@ def _classify_locations(records, prepared, config):
         crs="EPSG:2263",
     )
     locations["uhf42_id"] = pd.Series(uhf_ids, index=locations.index, dtype="object")
-    return locations[_location_frame_columns()]
+    locations = locations[_location_frame_columns()]
+    locations.attrs["borough_traffic"] = borough_traffic
+    locations.attrs["borough_polygon"] = polygon_boroughs
+    locations.attrs["rule"] = rules
+    locations.attrs["source"] = sources
+    return locations
 
 
 def _within_and_distance(points, prepared):
@@ -803,7 +798,44 @@ def _empty_locations():
     import geopandas as gpd
 
     table = {name: pd.Series(dtype="object") for name in _LOCATION_COLUMNS}
-    return gpd.GeoDataFrame(table, geometry=[], crs="EPSG:2263")
+    frame = gpd.GeoDataFrame(table, geometry=[], crs="EPSG:2263")
+    frame.attrs["borough_traffic"] = []
+    frame.attrs["borough_polygon"] = []
+    frame.attrs["rule"] = []
+    frame.attrs["source"] = []
+    return frame
+
+
+def _side_values(locations, name):
+    """Borough, rule, and source stay beside the location columns."""
+    if name in locations.columns:
+        return locations[name].tolist()
+    stored = locations.attrs.get(name)
+    if isinstance(stored, list) and len(stored) == len(locations.index):
+        return list(stored)
+    return [""] * len(locations.index)
+
+
+def _remember_rule(locations, idx, rule):
+    """Record a LION rule without adding it to the location columns."""
+    if "rule" in locations.columns:
+        locations.at[idx, "rule"] = rule
+    loc_id = locations.at[idx, "monitoring_location_id"]
+    updates = locations.attrs.get("rule_updates")
+    if not isinstance(updates, dict):
+        updates = {}
+        locations.attrs["rule_updates"] = updates
+    updates[loc_id] = rule
+    rules = locations.attrs.get("rule")
+    if not isinstance(rules, list):
+        return
+    ids = locations["monitoring_location_id"].tolist()
+    if len(rules) != len(ids):
+        return
+    for pos, current in enumerate(ids):
+        if current == loc_id:
+            rules[pos] = rule
+            break
 
 
 def _location_frame_columns():
