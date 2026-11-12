@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"UHFCODE": "1"},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-74.02, 40.70],
+          [-73.90, 40.70],
+          [-73.90, 40.82],
+          [-74.02, 40.82],
+          [-74.02, 40.70]
+        ]]
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "monitoring_location_id": "loc-1",
+        "uhf42_id": "1",
+        "assignment": "interior"
+      },
+      "geometry": {"type": "Point", "coordinates": [-73.96, 40.76]}
+    }
+  ]
+}
