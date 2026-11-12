@@ -45,3 +45,8 @@ commit: 385f0bc21e32fca59bb947d552d0c749e2c39fb3
 attempts: 1
 result: passed
 commit: fbc80b00957a1ec6acf8cf860c732806715734d0
+
+## describe-sample
+attempts: 1
+result: passed
+commit: e92ae94b0c55ee588e994327336cedfd1c80f1a7
