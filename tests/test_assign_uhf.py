@@ -1117,7 +1117,7 @@ def test_missing_shapefile_exits_2_and_mentions_select_sources(
     with _guard_repo():
         _assign_points, script = _require_script(reason)
         traffic = _traffic(
-            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f}")]
+            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f})")]
         )
         code, text, repo, _opened = _run_script(
             monkeypatch,
@@ -1231,7 +1231,7 @@ def test_near_edge_and_overlapping_polygons_are_boundary(
         assert point.within(overlap.geometry.iloc[0])
         assert point.within(overlap.geometry.iloc[1])
         overlap_traffic = _traffic(
-            [_row("1", "overlap", f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f}")]
+            [_row("1", "overlap", f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f})")]
         )
         code, text, value = _assign(
             capsys, assign_points, overlap_traffic, overlap, ["201", "202"]
@@ -1315,7 +1315,7 @@ def test_borough_mismatch_uses_canonical_names(monkeypatch, capsys, tmp_path):
             "EPSG:4326",
         )
         plain_traffic = _traffic(
-            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f}")]
+            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f})")]
         )
         code, text, value = _assign(
             capsys, assign_points, plain_traffic, plain, ["101"]
@@ -1339,7 +1339,7 @@ def test_id_mismatch_without_crosswalk_exits_2(monkeypatch, capsys, tmp_path):
         calls = _forbid_network(monkeypatch)
         assert load_config()["geography"]["id_crosswalk_csv"] == ""
         traffic = _traffic(
-            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f}")]
+            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f})")]
         )
         boundaries = _boundaries(
             [{"UHFCODE": "999", "geometry": _interior_box()}],
@@ -1362,7 +1362,7 @@ def test_crosswalk_maps_boundary_id_to_asthma_id(monkeypatch, capsys, tmp_path):
     with _guard_repo():
         _assign_points, script = _require_script(reason)
         traffic = _traffic(
-            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f}")]
+            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f})")]
         )
         boundaries = _boundaries(
             [{"UHFCODE": "999", "geometry": _interior_box()}],
@@ -1409,7 +1409,7 @@ def test_normalized_ids_match_and_code_zero_is_ignored(monkeypatch, capsys, tmp_
             "EPSG:4326",
         )
         traffic = _traffic(
-            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f}")]
+            [_row("1", SEGMENT, f"POINT({INTERIOR_LON:.10f} {INTERIOR_LAT:.10f})")]
         )
         code, text, value = _assign(
             capsys, assign_points, traffic, boundaries, ["1"]
