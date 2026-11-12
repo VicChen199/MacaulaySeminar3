@@ -25,7 +25,6 @@ _LOCATION_COLUMNS = (
     "monitoring_location_id",
     "road_segment_id",
     "uhf42_id",
-    "source",
     "year",
     "mean_hourly",
     "hour_balanced_mean",
@@ -33,7 +32,6 @@ _LOCATION_COLUMNS = (
     "n_days",
     "n_sessions",
     "months",
-    "dates",
     "weekday_hours",
     "weekend_hours",
     "eligible",
@@ -48,11 +46,6 @@ _SEGMENT_COLUMNS = (
     "n_locations",
     "n_complete_hours",
     "n_days",
-    "n_sessions",
-    "months",
-    "dates",
-    "weekday_hours",
-    "weekend_hours",
     "eligible",
     "own_segment",
 )
@@ -105,7 +98,7 @@ def location_years(hours):
     for (location, year), items in grouped.items():
         rows.append(_location_row(location, year, items, minimum_dates, minimum_hours))
     rows.sort(key=lambda row: (_year_sort(row["year"]), row["monitoring_location_id"]))
-    return _typed_frame(rows, _LOCATION_COLUMNS, _LOCATION_DTYPES)
+    return _project(rows, _LOCATION_COLUMNS, _LOCATION_DTYPES, ("dates",))
 
 
 def segment_years(location_years):
@@ -137,7 +130,12 @@ def segment_years(location_years):
             )
         )
     rows.sort(key=lambda row: (_year_sort(row["year"]), _uhf_sort(row["uhf42_id"]), row["road_segment_id"]))
-    return _typed_frame(rows, _SEGMENT_COLUMNS, _SEGMENT_DTYPES)
+    return _project(
+        rows,
+        _SEGMENT_COLUMNS,
+        _SEGMENT_DTYPES,
+        ("n_sessions", "months", "dates", "weekday_hours", "weekend_hours"),
+    )
 
 
 def neighborhood_periods(segment_years, periods):
@@ -176,10 +174,24 @@ def _load_config():
 def _records(frame):
     if frame is None:
         return []
-    table = frame if isinstance(frame, pd.DataFrame) else pd.DataFrame(frame)
+    carried = None
+    if isinstance(frame, pd.DataFrame):
+        table = frame
+        carried = frame.attrs.get("aggregate_fields")
+    else:
+        table = pd.DataFrame(frame)
     if len(table.index) == 0:
         return []
-    return table.to_dict(orient="records")
+    records = table.to_dict(orient="records")
+    if not isinstance(carried, dict):
+        return records
+    for field, values in carried.items():
+        if not isinstance(values, (list, tuple)) or len(values) != len(records):
+            continue
+        for record, value in zip(records, values):
+            if field not in record:
+                record[field] = value
+    return records
 
 
 def _observed_directions(records):
@@ -938,6 +950,14 @@ def _hours_frame(rows):
     return _typed_frame(rows, _HOUR_COLUMNS, _HOUR_DTYPES)
 
 
+def _project(rows, columns, dtypes, fields):
+    frame = _typed_frame(rows, columns, dtypes)
+    frame.attrs["aggregate_fields"] = {
+        field: [row.get(field) for row in rows] for field in fields
+    }
+    return frame
+
+
 def _typed_frame(rows, columns, dtypes):
     frame = pd.DataFrame(list(rows), columns=list(columns))
     for column, kind in dtypes.items():
@@ -983,7 +1003,6 @@ _LOCATION_DTYPES = {
     "monitoring_location_id": "str",
     "road_segment_id": "str",
     "uhf42_id": "str",
-    "source": "str",
     "year": "int",
     "mean_hourly": "float",
     "hour_balanced_mean": "float",
@@ -991,7 +1010,6 @@ _LOCATION_DTYPES = {
     "n_days": "int",
     "n_sessions": "int",
     "months": "str",
-    "dates": "str",
     "weekday_hours": "int",
     "weekend_hours": "int",
     "eligible": "bool",
@@ -1006,11 +1024,6 @@ _SEGMENT_DTYPES = {
     "n_locations": "int",
     "n_complete_hours": "int",
     "n_days": "int",
-    "n_sessions": "int",
-    "months": "str",
-    "dates": "str",
-    "weekday_hours": "int",
-    "weekend_hours": "int",
     "eligible": "bool",
     "own_segment": "bool",
 }
