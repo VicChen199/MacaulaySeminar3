@@ -1,0 +1,295 @@
+uhf42_id,uhf42_name,borough,period,asthma_ed_count,asthma_ed_rate_per_10000,traffic_mean_vehicles_per_hour,traffic_median_vehicles_per_hour,traffic_sd_vehicles_per_hour,n_road_segments,n_observation_days,n_complete_hours,traffic_source,coverage_status,exclusion_reason,traffic_mean_hour_balanced
+101,Kingsbridge - Riverdale,Bronx,2015,151,250.8,777.741865,503.300595,934.65803,4,7,178,automated,valid,,823.131313
+101,Kingsbridge - Riverdale,Bronx,2016,122,205.9,27.107143,27.107143,,1,7,174,automated,valid,,29.336458
+101,Kingsbridge - Riverdale,Bronx,2017,126,193.5,2364.603105,2364.603105,,1,15,343,automated,valid,,2331.38608
+101,Kingsbridge - Riverdale,Bronx,2018,124,211.8,1310.78621,1310.78621,1478.817728,2,13,302,automated,valid,,1259.106076
+101,Kingsbridge - Riverdale,Bronx,2019,81,127.8,474.458333,474.458333,59.952554,2,7,336,automated,valid,,460.658333
+101,Kingsbridge - Riverdale,Bronx,2022,109,213.4,,,,,,,,insufficient,missing_traffic,
+101,Kingsbridge - Riverdale,Bronx,2023,105,213.9,,,,,,,,insufficient,missing_traffic,
+102,Northeast Bronx,Bronx,2015,498,407.8,729.306424,296.02877,878.337668,3,20,492,automated,valid,,817.455936
+102,Northeast Bronx,Bronx,2016,525,436.1,195.182061,136.911905,181.275878,5,34,750,automated,valid,,202.683744
+102,Northeast Bronx,Bronx,2017,494,386.7,657.174792,560.078704,576.102156,5,37,995,automated,valid,,668.860937
+102,Northeast Bronx,Bronx,2018,491,419.7,456.828283,456.828283,,1,2,20,automated,valid,,471.8
+102,Northeast Bronx,Bronx,2019,399,322.1,495.196759,493.756944,18.334118,3,6,432,automated,valid,,470.406944
+102,Northeast Bronx,Bronx,2022,344,333.5,492.924917,377.672569,256.178964,3,15,316,automated,valid,,413.697727
+102,Northeast Bronx,Bronx,2023,302,306,,,,,,,,insufficient,missing_traffic,
+103,Fordham - Bronx Pk,Bronx,2015,1305,636,105.944444,105.944444,,1,3,45,automated,valid,,96.875
+103,Fordham - Bronx Pk,Bronx,2016,1169,576.3,228.734896,225.832639,220.461932,4,10,462,automated,valid,,215.582552
+103,Fordham - Bronx Pk,Bronx,2017,942,435.9,159.017141,159.017141,6.774024,2,15,523,automated,valid,,153.296586
+103,Fordham - Bronx Pk,Bronx,2018,888,436.6,739.939674,244.424242,1109.364764,5,13,420,automated,valid,,668.239514
+103,Fordham - Bronx Pk,Bronx,2019,716,341.3,1589.020833,1589.020833,,1,2,48,automated,valid,,1589.020833
+103,Fordham - Bronx Pk,Bronx,2022,622,361.3,473.495238,289.125,436.627351,4,9,384,automated,valid,,460.89401
+103,Fordham - Bronx Pk,Bronx,2023,573,344.5,1739.005208,1739.005208,1469.272137,2,6,144,automated,valid,,1739.005208
+104,Pelham - Throgs Neck,Bronx,2015,998,478.5,414.859893,310.395833,645.750646,13,57,2333,automated,valid,,388.194514
+104,Pelham - Throgs Neck,Bronx,2016,866,420.1,129.926083,119.822173,57.908167,6,15,843,automated,valid,,137.962442
+104,Pelham - Throgs Neck,Bronx,2017,713,338.3,617.657484,446.729167,527.216055,9,75,2489,automated,valid,,643.356653
+104,Pelham - Throgs Neck,Bronx,2018,710,362,1346.202655,546.552778,1751.538774,4,6,218,automated,valid,,1400.712837
+104,Pelham - Throgs Neck,Bronx,2019,647,315.2,,,,0,1,48,automated,insufficient,missing_traffic,
+104,Pelham - Throgs Neck,Bronx,2022,540,317.4,341.694444,341.694444,1.550551,2,17,786,automated,valid,,335.782891
+104,Pelham - Throgs Neck,Bronx,2023,484,294.5,,,,,,,,insufficient,missing_traffic,
+105,Crotona - Tremont,Bronx,2015,1374,737.6,380.564817,431.257239,287.945079,4,31,984,automated,valid,,374.051004
+105,Crotona - Tremont,Bronx,2016,1279,695,123.869048,123.869048,,1,7,168,automated,valid,,118.777083
+105,Crotona - Tremont,Bronx,2017,924,499.7,259.351339,210.29375,153.436342,4,17,386,automated,valid,,261.967361
+105,Crotona - Tremont,Bronx,2018,826,477,301.80625,301.80625,,1,4,87,automated,valid,,281.333333
+105,Crotona - Tremont,Bronx,2019,777,433.8,945.857143,945.857143,,1,7,168,automated,valid,,895.83125
+105,Crotona - Tremont,Bronx,2022,676,442.3,362.708333,362.708333,59.102342,2,9,432,automated,valid,,340.119048
+105,Crotona - Tremont,Bronx,2023,574,389.7,540.756526,210.625,941.017837,18,26,1992,automated,valid,,539.214815
+106,High Bridge - Morrisania,Bronx,2015,1547,846.6,237.802655,241.37963,180.514163,10,32,1194,automated,valid,,234.080193
+106,High Bridge - Morrisania,Bronx,2016,1427,790.6,320.945406,338.923735,188.160518,8,18,1176,automated,valid,,317.299002
+106,High Bridge - Morrisania,Bronx,2017,1096,608,475.043191,372.907738,365.693596,5,26,1100,automated,valid,,466.28837
+106,High Bridge - Morrisania,Bronx,2018,1036,603.3,1269.783156,1269.783156,,1,12,266,automated,valid,,1351.616667
+106,High Bridge - Morrisania,Bronx,2019,859,492,219.979167,219.979167,,1,6,144,automated,valid,,216.822917
+106,High Bridge - Morrisania,Bronx,2022,737,499.4,211.630952,211.630952,,1,7,168,automated,valid,,202.847917
+106,High Bridge - Morrisania,Bronx,2023,544,383.2,908.780506,908.780506,1082.520504,2,18,432,automated,valid,,914.522917
+107,Hunts Point - Mott Haven,Bronx,2015,1059,876.5,837.30822,503.883185,1034.185986,6,16,552,automated,valid,,892.522685
+107,Hunts Point - Mott Haven,Bronx,2016,1029,862,318.336359,230.31994,263.133753,12,29,1619,automated,valid,,334.490249
+107,Hunts Point - Mott Haven,Bronx,2017,805,681.1,403.490595,340.890476,321.755928,5,29,735,automated,valid,,378.364561
+107,Hunts Point - Mott Haven,Bronx,2018,687,613.6,279.363472,246.974613,138.757441,6,20,630,automated,valid,,284.165159
+107,Hunts Point - Mott Haven,Bronx,2019,605,529.2,9.893519,9.893519,,1,9,216,automated,valid,,7.639881
+107,Hunts Point - Mott Haven,Bronx,2022,418,415.2,41.625,41.625,18.481583,2,14,672,automated,valid,,39.09375
+107,Hunts Point - Mott Haven,Bronx,2023,337,347.2,771.797619,771.797619,916.03579,2,16,384,automated,valid,,753.802083
+201,Greenpoint,Brooklyn,2015,106,91.2,213.187051,138.848901,199.281403,5,19,924,automated,valid,,228.893182
+201,Greenpoint,Brooklyn,2016,117,102.7,499.099645,328.14881,462.645272,9,21,683,automated,valid,,476.943768
+201,Greenpoint,Brooklyn,2017,77,61.7,377.351429,188.595,466.988329,3,14,361,automated,valid,,367.722222
+201,Greenpoint,Brooklyn,2018,81,70.3,410.537409,387.645833,264.386147,6,13,484,automated,valid,,392.114137
+201,Greenpoint,Brooklyn,2019,61,49.6,281.984694,246.520833,217.890031,7,15,840,automated,valid,,273.953571
+201,Greenpoint,Brooklyn,2022,78,72.6,91.171131,91.171131,109.363744,2,21,504,automated,valid,,85.985417
+201,Greenpoint,Brooklyn,2023,87,83.8,4119.050926,4119.050926,,1,11,288,automated,valid,,4155.179167
+202,Downtown - Heights - Slope,Brooklyn,2015,246,124.5,272.131548,378.079762,202.214492,3,13,347,automated,valid,,284.269213
+202,Downtown - Heights - Slope,Brooklyn,2016,282,145,311.936843,226.490476,279.19994,13,71,2673,automated,valid,,307.620965
+202,Downtown - Heights - Slope,Brooklyn,2017,231,110.5,471.02381,471.02381,,1,8,169,automated,valid,,476.004167
+202,Downtown - Heights - Slope,Brooklyn,2018,224,114.7,134.177083,134.177083,,1,4,70,automated,valid,,156.582386
+202,Downtown - Heights - Slope,Brooklyn,2019,175,85.4,1189.421974,480.241667,1431.033833,11,51,1887,automated,valid,,1189.964144
+202,Downtown - Heights - Slope,Brooklyn,2022,183,101.8,351.829167,251.983333,398.637958,4,6,354,automated,valid,,351.829167
+202,Downtown - Heights - Slope,Brooklyn,2023,180,104.5,827.860098,742.710938,646.214706,4,11,648,automated,valid,,816.620139
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2015,1184,509,53.136905,53.136905,,1,4,70,automated,valid,,57.199811
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2016,1060,452.1,181.109019,186.73539,147.742871,3,15,299,automated,valid,,179.480903
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2017,840,358.8,170.894336,149.224387,112.184086,4,9,361,automated,valid,,183.229167
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2018,849,388.8,84.018925,21.5125,121.468215,3,9,201,automated,valid,,93.429924
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2019,665,290.7,397.833254,259.227976,383.307668,4,34,792,automated,valid,,392.501823
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2022,529,253.2,,,,,,,,insufficient,missing_traffic,
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2023,507,256.7,226.655644,190.505952,96.067332,3,16,552,automated,valid,,222.203819
+204,East New York,Brooklyn,2015,808,554.4,,,,0,1,1,automated,insufficient,missing_traffic,
+204,East New York,Brooklyn,2016,752,515.3,131.187169,131.187169,131.762988,2,24,523,automated,valid,,128.522035
+204,East New York,Brooklyn,2017,591,408.8,128.502222,108.589881,49.397607,3,6,285,automated,valid,,139.125
+204,East New York,Brooklyn,2018,560,414.2,342.778968,282.539583,191.031046,4,25,832,automated,valid,,346.053602
+204,East New York,Brooklyn,2019,463,331.4,501.114583,501.114583,,1,12,312,automated,valid,,494.609375
+204,East New York,Brooklyn,2022,376,297.6,144.981085,134.607143,52.771758,3,10,377,automated,valid,,126.314583
+204,East New York,Brooklyn,2023,326,274.6,429.129299,512.026786,291.183275,3,20,528,automated,valid,,412.715278
+205,Sunset Park,Brooklyn,2015,106,93.7,350.259755,286.902778,171.313865,3,11,318,automated,valid,,342.766204
+205,Sunset Park,Brooklyn,2016,127,115.7,229.376637,92.343254,323.203735,5,30,841,automated,valid,,224.162202
+205,Sunset Park,Brooklyn,2017,89,82.9,,,,,,,,insufficient,missing_traffic,
+205,Sunset Park,Brooklyn,2018,80,83.1,141.696957,156.625,78.746482,3,12,512,automated,valid,,142.752935
+205,Sunset Park,Brooklyn,2019,76,75.2,,,,,,,,insufficient,missing_traffic,
+205,Sunset Park,Brooklyn,2022,58,74.8,428.619048,428.619048,,1,7,168,automated,valid,,417.283333
+205,Sunset Park,Brooklyn,2023,79,109.6,373.645833,373.645833,,1,2,25,automated,valid,,527.645833
+206,Borough Park,Brooklyn,2015,246,70.2,150.025595,75.821429,211.357427,4,8,282,automated,valid,,137.486458
+206,Borough Park,Brooklyn,2016,214,63.2,574.436538,92.701786,730.587181,8,37,971,automated,valid,,591.131304
+206,Borough Park,Brooklyn,2017,140,39.7,178.631459,87.235119,196.569682,3,18,351,automated,valid,,168.61473
+206,Borough Park,Brooklyn,2018,162,49.2,170.598542,193.594702,92.295941,4,8,366,automated,valid,,177.388021
+206,Borough Park,Brooklyn,2019,118,34.5,,,,,,,,insufficient,missing_traffic,
+206,Borough Park,Brooklyn,2022,87,31,73.856771,71.807292,56.999375,4,4,384,automated,valid,,73.856771
+206,Borough Park,Brooklyn,2023,137,51.2,181.270833,215.910714,96.106997,3,17,578,automated,valid,,174.817593
+207,East Flatbush - Flatbush,Brooklyn,2015,649,326.7,99.840246,89.9,85.254719,6,31,865,automated,valid,,93.792803
+207,East Flatbush - Flatbush,Brooklyn,2016,596,298.1,109.925234,80.390179,88.131703,4,14,502,automated,valid,,118.00217
+207,East Flatbush - Flatbush,Brooklyn,2017,436,225.4,358.80513,252.630952,393.003023,8,32,1343,automated,valid,,359.731808
+207,East Flatbush - Flatbush,Brooklyn,2018,444,236.9,129.957027,122.822871,89.327337,4,12,417,automated,valid,,127.984896
+207,East Flatbush - Flatbush,Brooklyn,2019,419,221.6,305.719322,305.719322,335.498209,2,20,454,automated,valid,,300.214732
+207,East Flatbush - Flatbush,Brooklyn,2022,410,250.5,520.964286,520.964286,103.616397,2,7,336,automated,valid,,523.484375
+207,East Flatbush - Flatbush,Brooklyn,2023,345,223.2,496.412698,361.006944,298.873093,4,17,480,automated,valid,,486.405729
+208,Canarsie - Flatlands,Brooklyn,2015,337,271.5,252.780992,241.663413,246.104952,4,6,324,automated,valid,,263.170312
+208,Canarsie - Flatlands,Brooklyn,2016,327,261.7,192.639662,119.604167,136.471325,11,26,878,automated,valid,,197.578157
+208,Canarsie - Flatlands,Brooklyn,2017,282,229.4,,,,0,2,8,automated,insufficient,missing_traffic,
+208,Canarsie - Flatlands,Brooklyn,2018,303,256.8,94.279782,95.652273,22.361409,4,18,463,automated,valid,,95.323698
+208,Canarsie - Flatlands,Brooklyn,2019,231,192.6,265.962332,300.472767,191.22259,7,26,880,automated,valid,,293.0563
+208,Canarsie - Flatlands,Brooklyn,2022,256,251.9,909.5,909.5,342.62002,2,11,528,automated,valid,,894.410714
+208,Canarsie - Flatlands,Brooklyn,2023,218,228.1,1510.966657,621.601852,1438.047596,7,39,1197,automated,valid,,1503.123016
+209,Bensonhurst - Bay Ridge,Brooklyn,2015,84,61,821.916986,143.386376,1423.039706,4,20,547,automated,valid,,831.167882
+209,Bensonhurst - Bay Ridge,Brooklyn,2016,81,60.7,297.740414,331.448458,122.257158,6,13,442,automated,valid,,291.101025
+209,Bensonhurst - Bay Ridge,Brooklyn,2017,50,34,338.75262,391.308333,208.31107,5,34,1455,automated,valid,,359.291746
+209,Bensonhurst - Bay Ridge,Brooklyn,2018,60,45.9,554.464286,554.464286,,1,3,44,automated,valid,,649.952381
+209,Bensonhurst - Bay Ridge,Brooklyn,2019,50,35.6,809.85,809.85,,1,5,120,automated,valid,,788.859375
+209,Bensonhurst - Bay Ridge,Brooklyn,2022,84,77,444.963502,444.963502,148.676623,2,22,981,automated,valid,,430.710962
+209,Bensonhurst - Bay Ridge,Brooklyn,2023,100,97.5,472.243827,531.893519,204.15082,3,19,671,automated,valid,,470.651389
+210,Coney Island - Sheepshead Bay,Brooklyn,2015,203,114.2,753.509919,129.944444,1276.28776,9,16,541,automated,valid,,761.681862
+210,Coney Island - Sheepshead Bay,Brooklyn,2016,215,124.7,213.143654,137.284314,178.389775,5,18,479,automated,valid,,237.833092
+210,Coney Island - Sheepshead Bay,Brooklyn,2017,169,87,133.16019,133.97081,83.959172,6,34,1336,automated,valid,,130.923457
+210,Coney Island - Sheepshead Bay,Brooklyn,2018,176,98.4,99.880613,88.532941,36.504396,4,7,309,automated,valid,,112.197917
+210,Coney Island - Sheepshead Bay,Brooklyn,2019,172,91.6,355.034761,335.878142,154.241328,10,24,1257,automated,valid,,351.079236
+210,Coney Island - Sheepshead Bay,Brooklyn,2022,162,109.3,468.352976,325.916667,384.37084,7,33,1344,automated,valid,,444.704911
+210,Coney Island - Sheepshead Bay,Brooklyn,2023,143,101.8,124.237168,124.237168,87.709209,2,16,431,automated,valid,,121.779861
+211,Williamsburg - Bushwick,Brooklyn,2015,761,438.9,101.831202,96.198333,44.055525,4,32,688,automated,valid,,123.473722
+211,Williamsburg - Bushwick,Brooklyn,2016,648,380.8,204.703293,132.223214,167.201184,8,23,718,automated,valid,,205.059319
+211,Williamsburg - Bushwick,Brooklyn,2017,550,319.6,112.560818,85.553571,92.929098,7,23,835,automated,valid,,115.654663
+211,Williamsburg - Bushwick,Brooklyn,2018,577,357.2,183.413247,142.102763,134.458965,6,23,830,automated,valid,,184.995164
+211,Williamsburg - Bushwick,Brooklyn,2019,436,261.2,175.967593,182.119048,78.192601,3,16,552,automated,valid,,175.973958
+211,Williamsburg - Bushwick,Brooklyn,2022,259,179.5,347.675595,347.675595,,1,15,353,automated,valid,,347.366667
+211,Williamsburg - Bushwick,Brooklyn,2023,243,176.4,231.718388,231.718388,228.498098,2,16,383,automated,valid,,231.438889
+301,Washington Heights,Manhattan,2015,476,299.9,410.294544,328.75,211.86201,5,13,442,automated,valid,,444.80654
+301,Washington Heights,Manhattan,2016,448,288.5,239.351571,236.775198,181.376064,6,15,631,automated,valid,,239.509549
+301,Washington Heights,Manhattan,2017,371,252.5,204.680748,191.147917,99.803451,6,33,1272,automated,valid,,200.697801
+301,Washington Heights,Manhattan,2018,342,240.5,57.759722,57.759722,1.67545,2,6,216,automated,valid,,57.759722
+301,Washington Heights,Manhattan,2019,383,269.8,526.56119,339.654762,340.79488,5,14,402,automated,valid,,473.828889
+301,Washington Heights,Manhattan,2022,316,272.6,,,,,,,,insufficient,missing_traffic,
+301,Washington Heights,Manhattan,2023,352,312.5,245.866667,245.866667,,1,5,120,automated,valid,,241.826389
+302,Central Harlem - Morningside Heights,Manhattan,2015,687,643.5,317.401786,317.401786,448.87391,2,4,35,automated,valid,,366.078947
+302,Central Harlem - Morningside Heights,Manhattan,2016,711,684.9,516.589286,516.589286,184.133973,2,9,207,automated,valid,,549.34375
+302,Central Harlem - Morningside Heights,Manhattan,2017,576,531.7,,,,,,,,insufficient,missing_traffic,
+302,Central Harlem - Morningside Heights,Manhattan,2018,500,488.9,770.642857,770.642857,,1,7,168,automated,valid,,767.3
+302,Central Harlem - Morningside Heights,Manhattan,2019,391,373.1,68.833333,68.833333,,1,2,48,automated,valid,,68.833333
+302,Central Harlem - Morningside Heights,Manhattan,2022,311,336.9,378.64881,378.64881,,1,7,168,automated,valid,,385.922917
+302,Central Harlem - Morningside Heights,Manhattan,2023,281,315.4,,,,,,,,insufficient,missing_traffic,
+303,East Harlem,Manhattan,2015,508,714.6,391.354081,539.852273,258.277793,3,14,492,automated,valid,,361.694367
+303,East Harlem,Manhattan,2016,486,700.1,,,,,,,,insufficient,missing_traffic,
+303,East Harlem,Manhattan,2017,370,550.6,,,,,,,,insufficient,missing_traffic,
+303,East Harlem,Manhattan,2018,345,529.2,,,,,,,,insufficient,missing_traffic,
+303,East Harlem,Manhattan,2019,268,413,,,,,,,,insufficient,missing_traffic,
+303,East Harlem,Manhattan,2022,242,435.6,,,,,,,,insufficient,missing_traffic,
+303,East Harlem,Manhattan,2023,250,466,372.351852,372.351852,,1,9,216,automated,valid,,372.411458
+304,Upper West Side,Manhattan,2015,197,166.6,372.222138,223.677778,299.752491,3,6,90,automated,valid,,405.082602
+304,Upper West Side,Manhattan,2016,178,152.9,399.044907,399.044907,271.415736,2,26,582,automated,valid,,385.722727
+304,Upper West Side,Manhattan,2017,184,155.3,579.586621,539.712359,169.008904,4,40,914,automated,valid,,574.302297
+304,Upper West Side,Manhattan,2018,164,143.7,1098.197321,1098.197321,1320.68901,2,16,375,automated,valid,,1103.6375
+304,Upper West Side,Manhattan,2019,122,103.6,281.243254,300.22619,84.847756,3,19,456,automated,valid,,275.554861
+304,Upper West Side,Manhattan,2022,93,95.9,1808.229167,2196.236111,973.18214,3,11,336,automated,valid,,1808.229167
+304,Upper West Side,Manhattan,2023,93,100.3,,,,0,1,16,automated,insufficient,missing_traffic,
+305,Upper East Side,Manhattan,2015,77,67.3,,,,,,,,insufficient,missing_traffic,
+305,Upper East Side,Manhattan,2016,80,71,760.814286,760.814286,264.973114,2,15,308,automated,valid,,818.890897
+305,Upper East Side,Manhattan,2017,74,63.9,508.522472,553.782051,360.198306,3,9,246,automated,valid,,541.184119
+305,Upper East Side,Manhattan,2018,79,72.3,662.732285,662.732285,89.261608,2,22,638,automated,valid,,644.888994
+305,Upper East Side,Manhattan,2019,63,54.7,502.203125,502.203125,55.073306,2,4,192,automated,valid,,502.203125
+305,Upper East Side,Manhattan,2022,62,72.4,3501.409722,3501.409722,3976.837284,2,6,144,automated,valid,,3501.409722
+305,Upper East Side,Manhattan,2023,63,77.1,747.595486,747.595486,318.961629,2,7,168,automated,valid,,733.982639
+306,Chelsea - Clinton,Manhattan,2015,51,98.5,,,,0,1,2,automated,insufficient,missing_traffic,
+306,Chelsea - Clinton,Manhattan,2016,45,87.6,937.5,937.5,,1,4,44,automated,valid,,937.5
+306,Chelsea - Clinton,Manhattan,2017,72,129.6,887.893824,705.749132,641.179071,10,34,1321,automated,valid,,886.88809
+306,Chelsea - Clinton,Manhattan,2018,60,116.8,1168.913527,1253.4375,662.723195,3,5,134,automated,valid,,1168.913527
+306,Chelsea - Clinton,Manhattan,2019,50,90.6,347.981812,291.319444,122.119696,3,11,409,automated,valid,,356.987963
+306,Chelsea - Clinton,Manhattan,2022,48,113.2,668.976984,657.535714,134.13551,3,12,456,automated,valid,,658.651389
+306,Chelsea - Clinton,Manhattan,2023,64,157.8,1493.652778,1493.652778,,1,3,72,automated,valid,,1512.375
+307,Gramercy Park - Murray Hill,Manhattan,2015,34,74.1,1388.680258,1388.680258,656.438231,2,8,166,automated,valid,,1267.009524
+307,Gramercy Park - Murray Hill,Manhattan,2016,43,94.6,325.285714,325.285714,,1,7,168,automated,valid,,303.43125
+307,Gramercy Park - Murray Hill,Manhattan,2017,49,100.2,380.659949,363.4,278.928989,7,24,867,automated,valid,,363.929191
+307,Gramercy Park - Murray Hill,Manhattan,2018,28,62.9,1271.184829,1271.184829,615.837124,2,18,421,automated,valid,,1205.033333
+307,Gramercy Park - Murray Hill,Manhattan,2019,43,88.7,1130.316778,1182.166667,226.805939,3,26,612,automated,valid,,1133.515352
+307,Gramercy Park - Murray Hill,Manhattan,2022,35,91.9,1209.946181,1338.954861,428.606638,4,5,264,automated,valid,,1209.946181
+307,Gramercy Park - Murray Hill,Manhattan,2023,38,104.9,386.036111,208.888889,434.377968,5,5,307,automated,valid,,386.036111
+308,Greenwich Village - SoHo,Manhattan,2015,15,43.4,557.425509,579.729167,431.778212,5,9,208,automated,valid,,527.570139
+308,Greenwich Village - SoHo,Manhattan,2016,19,55.8,606.38244,606.38244,485.527716,2,10,240,automated,valid,,612.727083
+308,Greenwich Village - SoHo,Manhattan,2017,16,44.1,326.375,326.375,,1,4,96,automated,valid,,326.375
+308,Greenwich Village - SoHo,Manhattan,2018,34,99.1,756.537879,756.537879,,1,11,264,automated,valid,,764.049851
+308,Greenwich Village - SoHo,Manhattan,2019,11,30.5,,,,0,1,5,automated,insufficient,missing_traffic,
+308,Greenwich Village - SoHo,Manhattan,2022,18,67.5,,,,,,,,insufficient,missing_traffic,
+308,Greenwich Village - SoHo,Manhattan,2023,24,94.4,662.639493,662.639493,,1,23,529,automated,valid,,657.23874
+309,Union Square - Lower East Side,Manhattan,2015,246,323.9,800.596032,863.590278,389.099285,5,17,523,automated,valid,,808.470682
+309,Union Square - Lower East Side,Manhattan,2016,207,276.6,,,,,,,,insufficient,missing_traffic,
+309,Union Square - Lower East Side,Manhattan,2017,191,273.1,885.072024,885.072024,,1,5,95,automated,valid,,945.03125
+309,Union Square - Lower East Side,Manhattan,2018,131,200.5,23.428571,23.428571,,1,7,150,automated,valid,,24.678125
+309,Union Square - Lower East Side,Manhattan,2019,157,229,174.652778,183.5,43.051863,3,6,285,automated,valid,,276.278935
+309,Union Square - Lower East Side,Manhattan,2022,93,171.5,,,,,,,,insufficient,missing_traffic,
+309,Union Square - Lower East Side,Manhattan,2023,110,213.8,916.322222,465.083333,838.161236,5,15,600,automated,valid,,915.566667
+310,Lower Manhattan,Manhattan,2015,27,70,,,,,,,,insufficient,missing_traffic,
+310,Lower Manhattan,Manhattan,2016,33,86.2,,,,0,1,19,automated,insufficient,missing_traffic,
+310,Lower Manhattan,Manhattan,2017,35,84.9,356.195539,252.416667,295.598269,5,16,439,automated,valid,,405.150417
+310,Lower Manhattan,Manhattan,2018,40,107.7,,,,,,,,insufficient,missing_traffic,
+310,Lower Manhattan,Manhattan,2019,36,87.5,228.610119,228.610119,79.385363,2,7,336,automated,valid,,225.439583
+310,Lower Manhattan,Manhattan,2022,38,121.6,,,,,,,,insufficient,missing_traffic,
+310,Lower Manhattan,Manhattan,2023,27,90.7,,,,,,,,insufficient,missing_traffic,
+401,Long Island City - Astoria,Queens,2015,145,128.6,622.170874,533.116667,471.397685,9,25,851,automated,valid,,620.30103
+401,Long Island City - Astoria,Queens,2016,148,132.6,840.12977,983.721537,534.859758,5,39,864,automated,valid,,835.676787
+401,Long Island City - Astoria,Queens,2017,121,108.7,206.885927,57.148855,292.254523,6,39,1335,automated,valid,,202.907316
+401,Long Island City - Astoria,Queens,2018,132,121.7,357.319028,326.850559,288.790156,6,22,1207,automated,valid,,342.939517
+401,Long Island City - Astoria,Queens,2019,118,110.2,418.499762,397.792869,309.123748,9,59,2316,automated,valid,,413.697452
+401,Long Island City - Astoria,Queens,2022,121,133.6,547.067441,551.636846,259.497437,3,29,671,automated,valid,,536.867898
+401,Long Island City - Astoria,Queens,2023,104,120.7,279.077381,279.077381,,1,7,168,automated,valid,,269.522917
+402,West Queens,Queens,2015,665,198.8,230.362858,168.118087,206.240336,12,88,2590,automated,valid,,223.300497
+402,West Queens,Queens,2016,711,217,577.983598,510.668899,449.480551,12,27,1180,automated,valid,,575.607031
+402,West Queens,Queens,2017,638,197.3,360.200076,462.485734,245.460682,5,30,948,automated,valid,,342.180032
+402,West Queens,Queens,2018,547,176.9,370.659288,247.892361,362.777993,8,14,633,automated,valid,,376.513889
+402,West Queens,Queens,2019,486,156.2,498.057219,374.285256,365.752817,9,52,1941,automated,valid,,476.287858
+402,West Queens,Queens,2022,423,161.3,545.839333,545.839333,284.883996,2,29,697,automated,valid,,532.236343
+402,West Queens,Queens,2023,384,152.5,2020.943254,2298.625,1583.869958,5,13,456,automated,valid,,2019.171111
+403,Flushing - Clearview,Queens,2015,183,129.8,187.259073,156.552381,157.191521,7,52,1237,automated,valid,,195.594124
+403,Flushing - Clearview,Queens,2016,180,129.8,480.635417,412.364583,499.780372,3,22,451,automated,valid,,461.567224
+403,Flushing - Clearview,Queens,2017,159,107.2,185.709821,147.1875,198.88277,3,13,358,automated,valid,,191.790972
+403,Flushing - Clearview,Queens,2018,162,123.5,595.982658,595.982658,820.228406,2,17,385,automated,valid,,577.753762
+403,Flushing - Clearview,Queens,2019,134,94.6,406.548361,348.243056,290.907533,7,39,1315,automated,valid,,392.664087
+403,Flushing - Clearview,Queens,2022,128,115.3,,,,,,,,insufficient,missing_traffic,
+403,Flushing - Clearview,Queens,2023,148,141.3,,,,,,,,insufficient,missing_traffic,
+404,Bayside - Little Neck,Queens,2015,28,59.9,279.559491,279.559491,7.94513,2,13,485,automated,valid,,307.357887
+404,Bayside - Little Neck,Queens,2016,23,50.1,290.399147,168.947976,291.973888,8,32,982,automated,valid,,290.582088
+404,Bayside - Little Neck,Queens,2017,26,52.7,,,,,,,,insufficient,missing_traffic,
+404,Bayside - Little Neck,Queens,2018,22,50.4,79.688244,112.797619,64.229169,3,15,355,automated,valid,,87.014187
+404,Bayside - Little Neck,Queens,2019,14,29.7,,,,0,1,48,automated,insufficient,missing_traffic,
+404,Bayside - Little Neck,Queens,2022,44,115.3,532.466153,532.466153,,1,3,48,automated,valid,,635.4375
+404,Bayside - Little Neck,Queens,2023,35,97.3,393.800347,393.800347,389.583918,2,11,264,automated,valid,,388.975694
+405,Ridgewood - Forest Hills,Queens,2015,251,155.5,591.491869,266.900463,584.210876,6,43,1455,automated,valid,,570.32641
+405,Ridgewood - Forest Hills,Queens,2016,203,128.2,368.151042,368.151042,254.91936,2,8,192,automated,valid,,368.151042
+405,Ridgewood - Forest Hills,Queens,2017,172,97.3,370.875,117.945833,449.93734,3,11,360,automated,valid,,378.004861
+405,Ridgewood - Forest Hills,Queens,2018,176,106.6,149.138764,146.304461,157.648087,4,27,669,automated,valid,,158.106833
+405,Ridgewood - Forest Hills,Queens,2019,140,82.4,281.110831,156.495833,285.431972,7,34,1175,automated,valid,,276.7563
+405,Ridgewood - Forest Hills,Queens,2022,170,122,103.288889,129.416667,50.041283,3,6,377,automated,valid,,95.128472
+405,Ridgewood - Forest Hills,Queens,2023,166,124.8,1091.916667,1600.680556,946.358775,3,18,487,automated,valid,,1091.916667
+406,Fresh Meadows,Queens,2015,102,141.8,60.35,60.35,,1,3,25,automated,valid,,60.35
+406,Fresh Meadows,Queens,2016,94,132.8,40.978333,40.978333,,1,5,95,automated,valid,,44.197917
+406,Fresh Meadows,Queens,2017,85,111.1,338.72619,338.72619,,1,7,168,automated,valid,,303.764583
+406,Fresh Meadows,Queens,2018,96,137.9,,,,0,1,6,automated,insufficient,missing_traffic,
+406,Fresh Meadows,Queens,2019,88,120,,,,,,,,insufficient,missing_traffic,
+406,Fresh Meadows,Queens,2022,65,110.4,,,,,,,,insufficient,missing_traffic,
+406,Fresh Meadows,Queens,2023,59,105.8,2648.1875,2648.1875,531.508597,2,2,96,automated,valid,,2648.1875
+407,Southwest Queens,Queens,2015,392,205.1,136.761883,115.982916,68.111423,4,8,294,automated,valid,,144.554688
+407,Southwest Queens,Queens,2016,343,182.3,70.056853,70.056853,81.93643,2,6,144,automated,valid,,76.747024
+407,Southwest Queens,Queens,2017,320,166,410.821992,467.100769,265.941487,5,18,534,automated,valid,,419.626365
+407,Southwest Queens,Queens,2018,283,156.7,190.226936,152.040855,96.028646,4,27,848,automated,valid,,186.364236
+407,Southwest Queens,Queens,2019,291,157.1,1990.26994,1990.26994,1991.765333,2,17,408,automated,valid,,1966.4125
+407,Southwest Queens,Queens,2022,249,164.6,,,,,,,,insufficient,missing_traffic,
+407,Southwest Queens,Queens,2023,251,174.4,4090.102679,4090.102679,5034.602387,2,16,384,automated,valid,,4073.351562
+408,Jamaica,Queens,2015,697,347.4,389.337908,466.607428,184.619268,4,24,1317,automated,valid,,379.217448
+408,Jamaica,Queens,2016,633,316.4,310.342122,304.988095,131.244933,6,15,803,automated,valid,,305.778356
+408,Jamaica,Queens,2017,490,236.2,355.053902,368.821429,273.825674,3,24,574,automated,valid,,341.262847
+408,Jamaica,Queens,2018,484,251.6,,,,,,,,insufficient,missing_traffic,
+408,Jamaica,Queens,2019,444,221,1073.767857,903.535714,298.880568,3,19,456,automated,valid,,1049.835417
+408,Jamaica,Queens,2022,440,257.6,228.761905,228.761905,166.195347,2,7,336,automated,valid,,212.436458
+408,Jamaica,Queens,2023,389,239.8,1809.852183,1784.473214,1871.984092,4,18,480,automated,valid,,1807.611111
+409,Southeast Queens,Queens,2015,233,203.3,1564.491631,1694.979167,1225.110493,5,46,1150,automated,valid,,1553.582821
+409,Southeast Queens,Queens,2016,210,183.2,1268.959396,1305.62448,774.122114,6,52,1579,automated,valid,,1203.426206
+409,Southeast Queens,Queens,2017,177,148.1,579.672375,429.135417,414.082174,5,28,1091,automated,valid,,584.996244
+409,Southeast Queens,Queens,2018,168,152.1,692.505835,402.305556,460.287304,5,30,1000,automated,valid,,676.175848
+409,Southeast Queens,Queens,2019,158,136.2,727.410417,452.766667,585.976927,3,20,960,automated,valid,,701.299211
+409,Southeast Queens,Queens,2022,211,214.1,512.18254,512.18254,81.263966,2,10,232,automated,valid,,470.516667
+409,Southeast Queens,Queens,2023,193,206.4,603.964286,603.964286,596.924392,2,7,336,automated,valid,,589.4125
+410,Rockaways,Queens,2015,193,199.2,361.642851,412.309152,299.558485,5,29,1301,automated,valid,,328.743887
+410,Rockaways,Queens,2016,191,198.7,219.35626,165.27381,162.195027,4,26,768,automated,valid,,218.447664
+410,Rockaways,Queens,2017,169,160,390.592803,390.592803,,1,4,83,automated,valid,,360.625
+410,Rockaways,Queens,2018,165,165.3,237.874368,210.961169,203.170144,6,45,2692,automated,valid,,228.794392
+410,Rockaways,Queens,2019,140,136.6,397.295428,411.687872,378.562671,6,26,1344,automated,valid,,385.932523
+410,Rockaways,Queens,2022,165,180.2,,,,,,,,insufficient,missing_traffic,
+410,Rockaways,Queens,2023,144,164.4,,,,,,,,insufficient,missing_traffic,
+501,Port Richmond,Staten Island,2015,124,261,271.25,271.25,78.8866,2,4,144,automated,valid,,265.678819
+501,Port Richmond,Staten Island,2016,135,284.7,124.617316,100.899405,52.934551,4,7,193,automated,valid,,157.131944
+501,Port Richmond,Staten Island,2017,123,242.9,,,,,,,,insufficient,missing_traffic,
+501,Port Richmond,Staten Island,2018,98,201.3,,,,,,,,insufficient,missing_traffic,
+501,Port Richmond,Staten Island,2019,80,157.9,472.476687,502.416667,341.251816,4,13,384,automated,valid,,457.216667
+501,Port Richmond,Staten Island,2022,55,119.4,278.604167,278.604167,152.26366,2,2,96,automated,valid,,278.604167
+501,Port Richmond,Staten Island,2023,57,128.1,192.607639,192.607639,58.596564,2,12,576,automated,valid,,174.152083
+502,Stapleton - St. George,Staten Island,2015,145,199.4,340.881845,326.839286,261.487993,5,14,643,automated,valid,,339.389846
+502,Stapleton - St. George,Staten Island,2016,143,197.6,252.583532,180.559524,196.346289,5,16,563,automated,valid,,228.366518
+502,Stapleton - St. George,Staten Island,2017,120,163.2,261.730536,261.730536,46.040817,2,5,189,automated,valid,,284.692708
+502,Stapleton - St. George,Staten Island,2018,117,162.6,31.730952,31.730952,,1,5,99,automated,valid,,38.333333
+502,Stapleton - St. George,Staten Island,2019,104,139.6,1006.377315,1006.377315,165.872192,2,11,255,automated,valid,,1001.035938
+502,Stapleton - St. George,Staten Island,2022,102,151.4,,,,,,,,insufficient,missing_traffic,
+502,Stapleton - St. George,Staten Island,2023,108,164.9,,,,0,1,24,automated,insufficient,missing_traffic,
+503,Willowbrook,Staten Island,2015,34,72.3,,,,0,2,5,automated,insufficient,missing_traffic,
+503,Willowbrook,Staten Island,2016,35,75,381.265096,311.25,158.564389,6,25,1134,automated,valid,,347.207961
+503,Willowbrook,Staten Island,2017,24,46.3,,,,,,,,insufficient,missing_traffic,
+503,Willowbrook,Staten Island,2018,45,89.5,,,,,,,,insufficient,missing_traffic,
+503,Willowbrook,Staten Island,2019,28,52.5,641.409722,641.409722,230.251646,2,12,288,automated,valid,,634.482465
+503,Willowbrook,Staten Island,2022,21,43.9,143.729167,143.729167,,1,2,48,automated,valid,,143.729167
+503,Willowbrook,Staten Island,2023,24,51.2,453.303571,453.303571,,1,8,169,automated,valid,,471.7375
+504,South Beach - Tottenville,Staten Island,2015,56,54,1249.002976,948.218254,523.578088,3,18,404,automated,valid,,1295.247222
+504,South Beach - Tottenville,Staten Island,2016,52,50.8,393.884476,278.479167,313.629874,7,41,1113,automated,valid,,405.214789
+504,South Beach - Tottenville,Staten Island,2017,68,61.8,657.628294,485.606481,358.745266,5,30,1090,automated,valid,,650.122292
+504,South Beach - Tottenville,Staten Island,2018,36,34.8,646.721919,646.721919,404.865041,2,33,816,automated,valid,,646.614005
+504,South Beach - Tottenville,Staten Island,2019,47,43.1,384.92138,390.991793,307.042559,6,21,772,automated,valid,,385.066165
+504,South Beach - Tottenville,Staten Island,2022,46,45.9,751.604167,751.604167,546.033749,2,17,408,automated,valid,,730.694792
+504,South Beach - Tottenville,Staten Island,2023,46,46.9,,,,0,1,24,automated,insufficient,missing_traffic,

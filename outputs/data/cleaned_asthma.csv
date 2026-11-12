@@ -1,0 +1,295 @@
+uhf42_id,uhf42_name,borough,period,period_kind,constituent_years,asthma_ed_count,asthma_ed_rate_per_10000
+101,Kingsbridge - Riverdale,Bronx,2023,year,2023,105.0,213.9
+102,Northeast Bronx,Bronx,2023,year,2023,302.0,306.0
+103,Fordham - Bronx Pk,Bronx,2023,year,2023,573.0,344.5
+104,Pelham - Throgs Neck,Bronx,2023,year,2023,484.0,294.5
+105,Crotona - Tremont,Bronx,2023,year,2023,574.0,389.7
+106,High Bridge - Morrisania,Bronx,2023,year,2023,544.0,383.2
+107,Hunts Point - Mott Haven,Bronx,2023,year,2023,337.0,347.2
+201,Greenpoint,Brooklyn,2023,year,2023,87.0,83.8
+202,Downtown - Heights - Slope,Brooklyn,2023,year,2023,180.0,104.5
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2023,year,2023,507.0,256.7
+204,East New York,Brooklyn,2023,year,2023,326.0,274.6
+205,Sunset Park,Brooklyn,2023,year,2023,79.0,109.6
+206,Borough Park,Brooklyn,2023,year,2023,137.0,51.2
+207,East Flatbush - Flatbush,Brooklyn,2023,year,2023,345.0,223.2
+208,Canarsie - Flatlands,Brooklyn,2023,year,2023,218.0,228.1
+209,Bensonhurst - Bay Ridge,Brooklyn,2023,year,2023,100.0,97.5
+210,Coney Island - Sheepshead Bay,Brooklyn,2023,year,2023,143.0,101.8
+211,Williamsburg - Bushwick,Brooklyn,2023,year,2023,243.0,176.4
+301,Washington Heights,Manhattan,2023,year,2023,352.0,312.5
+302,Central Harlem - Morningside Heights,Manhattan,2023,year,2023,281.0,315.4
+303,East Harlem,Manhattan,2023,year,2023,250.0,466.0
+304,Upper West Side,Manhattan,2023,year,2023,93.0,100.3
+305,Upper East Side,Manhattan,2023,year,2023,63.0,77.1
+306,Chelsea - Clinton,Manhattan,2023,year,2023,64.0,157.8
+307,Gramercy Park - Murray Hill,Manhattan,2023,year,2023,38.0,104.9
+308,Greenwich Village - SoHo,Manhattan,2023,year,2023,24.0,94.4
+309,Union Square - Lower East Side,Manhattan,2023,year,2023,110.0,213.8
+310,Lower Manhattan,Manhattan,2023,year,2023,27.0,90.7
+401,Long Island City - Astoria,Queens,2023,year,2023,104.0,120.7
+402,West Queens,Queens,2023,year,2023,384.0,152.5
+403,Flushing - Clearview,Queens,2023,year,2023,148.0,141.3
+404,Bayside - Little Neck,Queens,2023,year,2023,35.0,97.3
+405,Ridgewood - Forest Hills,Queens,2023,year,2023,166.0,124.8
+406,Fresh Meadows,Queens,2023,year,2023,59.0,105.8
+407,Southwest Queens,Queens,2023,year,2023,251.0,174.4
+408,Jamaica,Queens,2023,year,2023,389.0,239.8
+409,Southeast Queens,Queens,2023,year,2023,193.0,206.4
+410,Rockaways,Queens,2023,year,2023,144.0,164.4
+501,Port Richmond,Staten Island,2023,year,2023,57.0,128.1
+502,Stapleton - St. George,Staten Island,2023,year,2023,108.0,164.9
+503,Willowbrook,Staten Island,2023,year,2023,24.0,51.2
+504,South Beach - Tottenville,Staten Island,2023,year,2023,46.0,46.9
+101,Kingsbridge - Riverdale,Bronx,2022,year,2022,109.0,213.4
+102,Northeast Bronx,Bronx,2022,year,2022,344.0,333.5
+103,Fordham - Bronx Pk,Bronx,2022,year,2022,622.0,361.3
+104,Pelham - Throgs Neck,Bronx,2022,year,2022,540.0,317.4
+105,Crotona - Tremont,Bronx,2022,year,2022,676.0,442.3
+106,High Bridge - Morrisania,Bronx,2022,year,2022,737.0,499.4
+107,Hunts Point - Mott Haven,Bronx,2022,year,2022,418.0,415.2
+201,Greenpoint,Brooklyn,2022,year,2022,78.0,72.6
+202,Downtown - Heights - Slope,Brooklyn,2022,year,2022,183.0,101.8
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2022,year,2022,529.0,253.2
+204,East New York,Brooklyn,2022,year,2022,376.0,297.6
+205,Sunset Park,Brooklyn,2022,year,2022,58.0,74.8
+206,Borough Park,Brooklyn,2022,year,2022,87.0,31.0
+207,East Flatbush - Flatbush,Brooklyn,2022,year,2022,410.0,250.5
+208,Canarsie - Flatlands,Brooklyn,2022,year,2022,256.0,251.9
+209,Bensonhurst - Bay Ridge,Brooklyn,2022,year,2022,84.0,77.0
+210,Coney Island - Sheepshead Bay,Brooklyn,2022,year,2022,162.0,109.3
+211,Williamsburg - Bushwick,Brooklyn,2022,year,2022,259.0,179.5
+301,Washington Heights,Manhattan,2022,year,2022,316.0,272.6
+302,Central Harlem - Morningside Heights,Manhattan,2022,year,2022,311.0,336.9
+303,East Harlem,Manhattan,2022,year,2022,242.0,435.6
+304,Upper West Side,Manhattan,2022,year,2022,93.0,95.9
+305,Upper East Side,Manhattan,2022,year,2022,62.0,72.4
+306,Chelsea - Clinton,Manhattan,2022,year,2022,48.0,113.2
+307,Gramercy Park - Murray Hill,Manhattan,2022,year,2022,35.0,91.9
+308,Greenwich Village - SoHo,Manhattan,2022,year,2022,18.0,67.5
+309,Union Square - Lower East Side,Manhattan,2022,year,2022,93.0,171.5
+310,Lower Manhattan,Manhattan,2022,year,2022,38.0,121.6
+401,Long Island City - Astoria,Queens,2022,year,2022,121.0,133.6
+402,West Queens,Queens,2022,year,2022,423.0,161.3
+403,Flushing - Clearview,Queens,2022,year,2022,128.0,115.3
+404,Bayside - Little Neck,Queens,2022,year,2022,44.0,115.3
+405,Ridgewood - Forest Hills,Queens,2022,year,2022,170.0,122.0
+406,Fresh Meadows,Queens,2022,year,2022,65.0,110.4
+407,Southwest Queens,Queens,2022,year,2022,249.0,164.6
+408,Jamaica,Queens,2022,year,2022,440.0,257.6
+409,Southeast Queens,Queens,2022,year,2022,211.0,214.1
+410,Rockaways,Queens,2022,year,2022,165.0,180.2
+501,Port Richmond,Staten Island,2022,year,2022,55.0,119.4
+502,Stapleton - St. George,Staten Island,2022,year,2022,102.0,151.4
+503,Willowbrook,Staten Island,2022,year,2022,21.0,43.9
+504,South Beach - Tottenville,Staten Island,2022,year,2022,46.0,45.9
+101,Kingsbridge - Riverdale,Bronx,2019,year,2019,81.0,127.8
+102,Northeast Bronx,Bronx,2019,year,2019,399.0,322.1
+103,Fordham - Bronx Pk,Bronx,2019,year,2019,716.0,341.3
+104,Pelham - Throgs Neck,Bronx,2019,year,2019,647.0,315.2
+105,Crotona - Tremont,Bronx,2019,year,2019,777.0,433.8
+106,High Bridge - Morrisania,Bronx,2019,year,2019,859.0,492.0
+107,Hunts Point - Mott Haven,Bronx,2019,year,2019,605.0,529.2
+201,Greenpoint,Brooklyn,2019,year,2019,61.0,49.6
+202,Downtown - Heights - Slope,Brooklyn,2019,year,2019,175.0,85.4
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2019,year,2019,665.0,290.7
+204,East New York,Brooklyn,2019,year,2019,463.0,331.4
+205,Sunset Park,Brooklyn,2019,year,2019,76.0,75.2
+206,Borough Park,Brooklyn,2019,year,2019,118.0,34.5
+207,East Flatbush - Flatbush,Brooklyn,2019,year,2019,419.0,221.6
+208,Canarsie - Flatlands,Brooklyn,2019,year,2019,231.0,192.6
+209,Bensonhurst - Bay Ridge,Brooklyn,2019,year,2019,50.0,35.6
+210,Coney Island - Sheepshead Bay,Brooklyn,2019,year,2019,172.0,91.6
+211,Williamsburg - Bushwick,Brooklyn,2019,year,2019,436.0,261.2
+301,Washington Heights,Manhattan,2019,year,2019,383.0,269.8
+302,Central Harlem - Morningside Heights,Manhattan,2019,year,2019,391.0,373.1
+303,East Harlem,Manhattan,2019,year,2019,268.0,413.0
+304,Upper West Side,Manhattan,2019,year,2019,122.0,103.6
+305,Upper East Side,Manhattan,2019,year,2019,63.0,54.7
+306,Chelsea - Clinton,Manhattan,2019,year,2019,50.0,90.6
+307,Gramercy Park - Murray Hill,Manhattan,2019,year,2019,43.0,88.7
+308,Greenwich Village - SoHo,Manhattan,2019,year,2019,11.0,30.5
+309,Union Square - Lower East Side,Manhattan,2019,year,2019,157.0,229.0
+310,Lower Manhattan,Manhattan,2019,year,2019,36.0,87.5
+401,Long Island City - Astoria,Queens,2019,year,2019,118.0,110.2
+402,West Queens,Queens,2019,year,2019,486.0,156.2
+403,Flushing - Clearview,Queens,2019,year,2019,134.0,94.6
+404,Bayside - Little Neck,Queens,2019,year,2019,14.0,29.7
+405,Ridgewood - Forest Hills,Queens,2019,year,2019,140.0,82.4
+406,Fresh Meadows,Queens,2019,year,2019,88.0,120.0
+407,Southwest Queens,Queens,2019,year,2019,291.0,157.1
+408,Jamaica,Queens,2019,year,2019,444.0,221.0
+409,Southeast Queens,Queens,2019,year,2019,158.0,136.2
+410,Rockaways,Queens,2019,year,2019,140.0,136.6
+501,Port Richmond,Staten Island,2019,year,2019,80.0,157.9
+502,Stapleton - St. George,Staten Island,2019,year,2019,104.0,139.6
+503,Willowbrook,Staten Island,2019,year,2019,28.0,52.5
+504,South Beach - Tottenville,Staten Island,2019,year,2019,47.0,43.1
+101,Kingsbridge - Riverdale,Bronx,2018,year,2018,124.0,211.8
+102,Northeast Bronx,Bronx,2018,year,2018,491.0,419.7
+103,Fordham - Bronx Pk,Bronx,2018,year,2018,888.0,436.6
+104,Pelham - Throgs Neck,Bronx,2018,year,2018,710.0,362.0
+105,Crotona - Tremont,Bronx,2018,year,2018,826.0,477.0
+106,High Bridge - Morrisania,Bronx,2018,year,2018,1036.0,603.3
+107,Hunts Point - Mott Haven,Bronx,2018,year,2018,687.0,613.6
+201,Greenpoint,Brooklyn,2018,year,2018,81.0,70.3
+202,Downtown - Heights - Slope,Brooklyn,2018,year,2018,224.0,114.7
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2018,year,2018,849.0,388.8
+204,East New York,Brooklyn,2018,year,2018,560.0,414.2
+205,Sunset Park,Brooklyn,2018,year,2018,80.0,83.1
+206,Borough Park,Brooklyn,2018,year,2018,162.0,49.2
+207,East Flatbush - Flatbush,Brooklyn,2018,year,2018,444.0,236.9
+208,Canarsie - Flatlands,Brooklyn,2018,year,2018,303.0,256.8
+209,Bensonhurst - Bay Ridge,Brooklyn,2018,year,2018,60.0,45.9
+210,Coney Island - Sheepshead Bay,Brooklyn,2018,year,2018,176.0,98.4
+211,Williamsburg - Bushwick,Brooklyn,2018,year,2018,577.0,357.2
+301,Washington Heights,Manhattan,2018,year,2018,342.0,240.5
+302,Central Harlem - Morningside Heights,Manhattan,2018,year,2018,500.0,488.9
+303,East Harlem,Manhattan,2018,year,2018,345.0,529.2
+304,Upper West Side,Manhattan,2018,year,2018,164.0,143.7
+305,Upper East Side,Manhattan,2018,year,2018,79.0,72.3
+306,Chelsea - Clinton,Manhattan,2018,year,2018,60.0,116.8
+307,Gramercy Park - Murray Hill,Manhattan,2018,year,2018,28.0,62.9
+308,Greenwich Village - SoHo,Manhattan,2018,year,2018,34.0,99.1
+309,Union Square - Lower East Side,Manhattan,2018,year,2018,131.0,200.5
+310,Lower Manhattan,Manhattan,2018,year,2018,40.0,107.7
+401,Long Island City - Astoria,Queens,2018,year,2018,132.0,121.7
+402,West Queens,Queens,2018,year,2018,547.0,176.9
+403,Flushing - Clearview,Queens,2018,year,2018,162.0,123.5
+404,Bayside - Little Neck,Queens,2018,year,2018,22.0,50.4
+405,Ridgewood - Forest Hills,Queens,2018,year,2018,176.0,106.6
+406,Fresh Meadows,Queens,2018,year,2018,96.0,137.9
+407,Southwest Queens,Queens,2018,year,2018,283.0,156.7
+408,Jamaica,Queens,2018,year,2018,484.0,251.6
+409,Southeast Queens,Queens,2018,year,2018,168.0,152.1
+410,Rockaways,Queens,2018,year,2018,165.0,165.3
+501,Port Richmond,Staten Island,2018,year,2018,98.0,201.3
+502,Stapleton - St. George,Staten Island,2018,year,2018,117.0,162.6
+503,Willowbrook,Staten Island,2018,year,2018,45.0,89.5
+504,South Beach - Tottenville,Staten Island,2018,year,2018,36.0,34.8
+101,Kingsbridge - Riverdale,Bronx,2017,year,2017,126.0,193.5
+102,Northeast Bronx,Bronx,2017,year,2017,494.0,386.7
+103,Fordham - Bronx Pk,Bronx,2017,year,2017,942.0,435.9
+104,Pelham - Throgs Neck,Bronx,2017,year,2017,713.0,338.3
+105,Crotona - Tremont,Bronx,2017,year,2017,924.0,499.7
+106,High Bridge - Morrisania,Bronx,2017,year,2017,1096.0,608.0
+107,Hunts Point - Mott Haven,Bronx,2017,year,2017,805.0,681.1
+201,Greenpoint,Brooklyn,2017,year,2017,77.0,61.7
+202,Downtown - Heights - Slope,Brooklyn,2017,year,2017,231.0,110.5
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2017,year,2017,840.0,358.8
+204,East New York,Brooklyn,2017,year,2017,591.0,408.8
+205,Sunset Park,Brooklyn,2017,year,2017,89.0,82.9
+206,Borough Park,Brooklyn,2017,year,2017,140.0,39.7
+207,East Flatbush - Flatbush,Brooklyn,2017,year,2017,436.0,225.4
+208,Canarsie - Flatlands,Brooklyn,2017,year,2017,282.0,229.4
+209,Bensonhurst - Bay Ridge,Brooklyn,2017,year,2017,50.0,34.0
+210,Coney Island - Sheepshead Bay,Brooklyn,2017,year,2017,169.0,87.0
+211,Williamsburg - Bushwick,Brooklyn,2017,year,2017,550.0,319.6
+301,Washington Heights,Manhattan,2017,year,2017,371.0,252.5
+302,Central Harlem - Morningside Heights,Manhattan,2017,year,2017,576.0,531.7
+303,East Harlem,Manhattan,2017,year,2017,370.0,550.6
+304,Upper West Side,Manhattan,2017,year,2017,184.0,155.3
+305,Upper East Side,Manhattan,2017,year,2017,74.0,63.9
+306,Chelsea - Clinton,Manhattan,2017,year,2017,72.0,129.6
+307,Gramercy Park - Murray Hill,Manhattan,2017,year,2017,49.0,100.2
+308,Greenwich Village - SoHo,Manhattan,2017,year,2017,16.0,44.1
+309,Union Square - Lower East Side,Manhattan,2017,year,2017,191.0,273.1
+310,Lower Manhattan,Manhattan,2017,year,2017,35.0,84.9
+401,Long Island City - Astoria,Queens,2017,year,2017,121.0,108.7
+402,West Queens,Queens,2017,year,2017,638.0,197.3
+403,Flushing - Clearview,Queens,2017,year,2017,159.0,107.2
+404,Bayside - Little Neck,Queens,2017,year,2017,26.0,52.7
+405,Ridgewood - Forest Hills,Queens,2017,year,2017,172.0,97.3
+406,Fresh Meadows,Queens,2017,year,2017,85.0,111.1
+407,Southwest Queens,Queens,2017,year,2017,320.0,166.0
+408,Jamaica,Queens,2017,year,2017,490.0,236.2
+409,Southeast Queens,Queens,2017,year,2017,177.0,148.1
+410,Rockaways,Queens,2017,year,2017,169.0,160.0
+501,Port Richmond,Staten Island,2017,year,2017,123.0,242.9
+502,Stapleton - St. George,Staten Island,2017,year,2017,120.0,163.2
+503,Willowbrook,Staten Island,2017,year,2017,24.0,46.3
+504,South Beach - Tottenville,Staten Island,2017,year,2017,68.0,61.8
+101,Kingsbridge - Riverdale,Bronx,2016,year,2016,122.0,205.9
+102,Northeast Bronx,Bronx,2016,year,2016,525.0,436.1
+103,Fordham - Bronx Pk,Bronx,2016,year,2016,1169.0,576.3
+104,Pelham - Throgs Neck,Bronx,2016,year,2016,866.0,420.1
+105,Crotona - Tremont,Bronx,2016,year,2016,1279.0,695.0
+106,High Bridge - Morrisania,Bronx,2016,year,2016,1427.0,790.6
+107,Hunts Point - Mott Haven,Bronx,2016,year,2016,1029.0,862.0
+201,Greenpoint,Brooklyn,2016,year,2016,117.0,102.7
+202,Downtown - Heights - Slope,Brooklyn,2016,year,2016,282.0,145.0
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2016,year,2016,1060.0,452.1
+204,East New York,Brooklyn,2016,year,2016,752.0,515.3
+205,Sunset Park,Brooklyn,2016,year,2016,127.0,115.7
+206,Borough Park,Brooklyn,2016,year,2016,214.0,63.2
+207,East Flatbush - Flatbush,Brooklyn,2016,year,2016,596.0,298.1
+208,Canarsie - Flatlands,Brooklyn,2016,year,2016,327.0,261.7
+209,Bensonhurst - Bay Ridge,Brooklyn,2016,year,2016,81.0,60.7
+210,Coney Island - Sheepshead Bay,Brooklyn,2016,year,2016,215.0,124.7
+211,Williamsburg - Bushwick,Brooklyn,2016,year,2016,648.0,380.8
+301,Washington Heights,Manhattan,2016,year,2016,448.0,288.5
+302,Central Harlem - Morningside Heights,Manhattan,2016,year,2016,711.0,684.9
+303,East Harlem,Manhattan,2016,year,2016,486.0,700.1
+304,Upper West Side,Manhattan,2016,year,2016,178.0,152.9
+305,Upper East Side,Manhattan,2016,year,2016,80.0,71.0
+306,Chelsea - Clinton,Manhattan,2016,year,2016,45.0,87.6
+307,Gramercy Park - Murray Hill,Manhattan,2016,year,2016,43.0,94.6
+308,Greenwich Village - SoHo,Manhattan,2016,year,2016,19.0,55.8
+309,Union Square - Lower East Side,Manhattan,2016,year,2016,207.0,276.6
+310,Lower Manhattan,Manhattan,2016,year,2016,33.0,86.2
+401,Long Island City - Astoria,Queens,2016,year,2016,148.0,132.6
+402,West Queens,Queens,2016,year,2016,711.0,217.0
+403,Flushing - Clearview,Queens,2016,year,2016,180.0,129.8
+404,Bayside - Little Neck,Queens,2016,year,2016,23.0,50.1
+405,Ridgewood - Forest Hills,Queens,2016,year,2016,203.0,128.2
+406,Fresh Meadows,Queens,2016,year,2016,94.0,132.8
+407,Southwest Queens,Queens,2016,year,2016,343.0,182.3
+408,Jamaica,Queens,2016,year,2016,633.0,316.4
+409,Southeast Queens,Queens,2016,year,2016,210.0,183.2
+410,Rockaways,Queens,2016,year,2016,191.0,198.7
+501,Port Richmond,Staten Island,2016,year,2016,135.0,284.7
+502,Stapleton - St. George,Staten Island,2016,year,2016,143.0,197.6
+503,Willowbrook,Staten Island,2016,year,2016,35.0,75.0
+504,South Beach - Tottenville,Staten Island,2016,year,2016,52.0,50.8
+101,Kingsbridge - Riverdale,Bronx,2015,year,2015,151.0,250.8
+102,Northeast Bronx,Bronx,2015,year,2015,498.0,407.8
+103,Fordham - Bronx Pk,Bronx,2015,year,2015,1305.0,636.0
+104,Pelham - Throgs Neck,Bronx,2015,year,2015,998.0,478.5
+105,Crotona - Tremont,Bronx,2015,year,2015,1374.0,737.6
+106,High Bridge - Morrisania,Bronx,2015,year,2015,1547.0,846.6
+107,Hunts Point - Mott Haven,Bronx,2015,year,2015,1059.0,876.5
+201,Greenpoint,Brooklyn,2015,year,2015,106.0,91.2
+202,Downtown - Heights - Slope,Brooklyn,2015,year,2015,246.0,124.5
+203,Bedford Stuyvesant - Crown Heights,Brooklyn,2015,year,2015,1184.0,509.0
+204,East New York,Brooklyn,2015,year,2015,808.0,554.4
+205,Sunset Park,Brooklyn,2015,year,2015,106.0,93.7
+206,Borough Park,Brooklyn,2015,year,2015,246.0,70.2
+207,East Flatbush - Flatbush,Brooklyn,2015,year,2015,649.0,326.7
+208,Canarsie - Flatlands,Brooklyn,2015,year,2015,337.0,271.5
+209,Bensonhurst - Bay Ridge,Brooklyn,2015,year,2015,84.0,61.0
+210,Coney Island - Sheepshead Bay,Brooklyn,2015,year,2015,203.0,114.2
+211,Williamsburg - Bushwick,Brooklyn,2015,year,2015,761.0,438.9
+301,Washington Heights,Manhattan,2015,year,2015,476.0,299.9
+302,Central Harlem - Morningside Heights,Manhattan,2015,year,2015,687.0,643.5
+303,East Harlem,Manhattan,2015,year,2015,508.0,714.6
+304,Upper West Side,Manhattan,2015,year,2015,197.0,166.6
+305,Upper East Side,Manhattan,2015,year,2015,77.0,67.3
+306,Chelsea - Clinton,Manhattan,2015,year,2015,51.0,98.5
+307,Gramercy Park - Murray Hill,Manhattan,2015,year,2015,34.0,74.1
+308,Greenwich Village - SoHo,Manhattan,2015,year,2015,15.0,43.4
+309,Union Square - Lower East Side,Manhattan,2015,year,2015,246.0,323.9
+310,Lower Manhattan,Manhattan,2015,year,2015,27.0,70.0
+401,Long Island City - Astoria,Queens,2015,year,2015,145.0,128.6
+402,West Queens,Queens,2015,year,2015,665.0,198.8
+403,Flushing - Clearview,Queens,2015,year,2015,183.0,129.8
+404,Bayside - Little Neck,Queens,2015,year,2015,28.0,59.9
+405,Ridgewood - Forest Hills,Queens,2015,year,2015,251.0,155.5
+406,Fresh Meadows,Queens,2015,year,2015,102.0,141.8
+407,Southwest Queens,Queens,2015,year,2015,392.0,205.1
+408,Jamaica,Queens,2015,year,2015,697.0,347.4
+409,Southeast Queens,Queens,2015,year,2015,233.0,203.3
+410,Rockaways,Queens,2015,year,2015,193.0,199.2
+501,Port Richmond,Staten Island,2015,year,2015,124.0,261.0
+502,Stapleton - St. George,Staten Island,2015,year,2015,145.0,199.4
+503,Willowbrook,Staten Island,2015,year,2015,34.0,72.3
+504,South Beach - Tottenville,Staten Island,2015,year,2015,56.0,54.0

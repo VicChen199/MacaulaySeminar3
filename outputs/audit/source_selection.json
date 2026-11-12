@@ -1,0 +1,72 @@
+{
+  "scenario": "A",
+  "mix_used": false,
+  "comparability_pass": null,
+  "comparability_r": null,
+  "comparability_n": null,
+  "periods": [
+    {
+      "period": "2023",
+      "source": "automated",
+      "years": [
+        2023
+      ],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2022",
+      "source": "automated",
+      "years": [
+        2022
+      ],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2019",
+      "source": "automated",
+      "years": [
+        2019
+      ],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2018",
+      "source": "automated",
+      "years": [
+        2018
+      ],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2017",
+      "source": "automated",
+      "years": [
+        2017
+      ],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2016",
+      "source": "automated",
+      "years": [
+        2016
+      ],
+      "included": true,
+      "reason": ""
+    },
+    {
+      "period": "2015",
+      "source": "automated",
+      "years": [
+        2015
+      ],
+      "included": true,
+      "reason": ""
+    }
+  ]
+}
